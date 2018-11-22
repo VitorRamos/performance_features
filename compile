@@ -1,0 +1,5 @@
+#!/bin/bash
+
+swig -c++ -python workload.i
+g++ -fPIC -c workload.cpp workload_wrap.cxx -I /usr/include/python3.6
+gcc -shared workload.o workload_wrap.o -lpfm -o _workload.so -lstdc++
