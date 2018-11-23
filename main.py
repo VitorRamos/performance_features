@@ -31,9 +31,15 @@ events= [['PERF_COUNT_HW_INSTRUCTIONS'],
             ['PERF_COUNT_SW_PAGE_FAULTS']]
 
 try:
+    evs= list_events().get_supported_events()
+    rapl_evs= [ e for e in evs if 'RAPL' in e ]
+
+    rapl_evs= [['SYSTEMWIDE:'+e] for e in rapl_evs]
+    rapl_evs= [['PERF_COUNT_HW_INSTRUCTIONS']]+rapl_evs
+    print(rapl_evs)
     # list_all_events()
-    workload(events)
+    # workload(events)
     # python_workload(events)
-    # from_pid(events)
+    from_pid(rapl_evs)
 except RuntimeError as e:
     print(e.args[0])

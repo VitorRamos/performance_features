@@ -57,6 +57,8 @@ class profiler:
             ev_list= []
             for e in group:
                 #TODO check err
+                if 'SYSTEMWIDE' in e:
+                    e= e.split(':')[1]
                 err, encoding = perfmon.pfm_get_perf_event_encoding(e, perfmon.PFM_PLM0 | perfmon.PFM_PLM3, None, None)
                 ev_list.append(encoding)
             self.event_groups.append(ev_list)
@@ -65,7 +67,7 @@ class profiler:
         """
             Create the events from the perf_event_attr groups
         """
-        for group in self.event_groups:
+        for group, group_name in zip(self.event_groups, self.event_groups_names):
             fd_list= []
             if len(group) > 1:
                 e= group[0]
@@ -89,13 +91,16 @@ class profiler:
                         raise Exception("Error creating fd")
                     fd_list.append(fd)
             else:
-                for e in group:
-                    e.exclude_kernel = 1
-                    e.exclude_hv = 1
-                    e.inherit= 1
-                    e.disable= 1
+                for e, e_name in zip(group,group_name):
+                    if 'SYSTEMWIDE' in e_name:
+                        fd= perfmon.perf_event_open(e, -1, 0, -1, 0)
+                    else:
+                        e.exclude_kernel = 1
+                        e.exclude_hv = 1
+                        e.inherit= 1
+                        e.disable= 1
+                        fd= perfmon.perf_event_open(e, pid, -1, -1, 0)
 
-                    fd= perfmon.perf_event_open(e, pid, -1, -1, 0)
                     if fd < 0: 
                         raise Exception("Erro creating fd")
                     fd_list.append(fd)
