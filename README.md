@@ -60,7 +60,7 @@ try:
             ['PERF_COUNT_SW_PAGE_FAULTS']]
             
     perf= profiler(program_args= ['./hello'], events_groups=events)
-    data= perf.run(period= 0.01)
+    data= perf.run(sample_period= 0.01)
     print(data)
 except RuntimeError as e:
     print(e.args[0])

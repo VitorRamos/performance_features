@@ -17,21 +17,21 @@ class profiler:
     PERF_EVENT_IOC_ID = 0x80082407
     PERF_EVENT_IOC_RESET = 0x2403
 
-    def __init__(self, program_args, events_groups):
+    def __init__(self, events_groups, program_args=None):
         """
             program_args : list with program name and arguments to run
             events_groups : list of list of event names, each list is a event group with event leader the first name
         """
-        self.chceck_paranoid()
+        self.__check_paranoid()
         self.system = perfmon.System()
         self.event_groups_names = events_groups
         self.event_groups = []
         self.fd_groups = []
         self.program_args= program_args
         self.program= None
-        self.encode_events()
+        self.__encode_events()
 
-    def chceck_paranoid(self):
+    def __check_paranoid(self):
         """
         Check perf_event_paranoid wich Controls use of the performance events 
         system by unprivileged users (without CAP_SYS_ADMIN).
@@ -49,7 +49,7 @@ class profiler:
             if val != -1:
                 raise Exception("Paranoid enable")
 
-    def encode_events(self):
+    def __encode_events(self):
         """
             Find the configuration perf_event_attr for each event name
         """
@@ -61,7 +61,7 @@ class profiler:
                 ev_list.append(encoding)
             self.event_groups.append(ev_list)
 
-    def create_events(self):
+    def __create_events(self, pid):
         """
             Create the events from the perf_event_attr groups
         """
@@ -74,8 +74,9 @@ class profiler:
                 e.inherit= 1
                 e.disable= 1
                 e.read_format= perfmon.PERF_FORMAT_GROUP  | perfmon.PERF_FORMAT_TOTAL_TIME_ENABLED
-                fd= perfmon.perf_event_open(e, self.program.pid, -1, -1, 0)
-                if fd < 1: raise Exception("Error creating fd")
+                fd= perfmon.perf_event_open(e, pid, -1, -1, 0)
+                if fd < 1:
+                    raise Exception("Error creating fd")
                 fd_list.append(fd)
                 for e in group[1:]:
                     e.exclude_kernel = 1
@@ -83,8 +84,9 @@ class profiler:
                     e.inherit= 1
                     e.disable= 1
                     e.read_format= perfmon.PERF_FORMAT_GROUP  | perfmon.PERF_FORMAT_TOTAL_TIME_ENABLED
-                    fd= perfmon.perf_event_open(e, self.program.pid, -1, fd_list[0], 0)
-                    if fd < 1: raise Exception("Error creating fd")
+                    fd= perfmon.perf_event_open(e, pid, -1, fd_list[0], 0)
+                    if fd < 1: 
+                        raise Exception("Error creating fd")
                     fd_list.append(fd)
             else:
                 for e in group:
@@ -93,12 +95,13 @@ class profiler:
                     e.inherit= 1
                     e.disable= 1
 
-                    fd= perfmon.perf_event_open(e, self.program.pid, -1, -1, 0)
-                    if fd < 0: raise Exception("Erro creating fd")
+                    fd= perfmon.perf_event_open(e, pid, -1, -1, 0)
+                    if fd < 0: 
+                        raise Exception("Erro creating fd")
                     fd_list.append(fd)
             self.fd_groups.append(fd_list)
     
-    def destroy_events(self):
+    def __destroy_events(self):
         """
             Close all file descriptors destroying the events
         """
@@ -107,7 +110,7 @@ class profiler:
                 os.close(fd)
         self.fd_groups= []
 
-    def kill_program(self):
+    def __kill_program(self):
         """
             Kill the workload if still alive
         """
@@ -116,86 +119,23 @@ class profiler:
             self.program.start()
             os.kill(self.program.pid, signal.SIGKILL)
 
-    def enable_events(self):
-        """
-            Enable the events
-        """
-        for fd in self.fd_groups:
-            fcntl.ioctl(fd[0], profiler.PERF_EVENT_IOC_ENABLE, 0)
-
-    def disable_events(self):
-        """
-            Disable the events
-        """
-        for fd in self.fd_groups:
-            fcntl.ioctl(fd[0], profiler.PERF_EVENT_IOC_DISABLE, 0)
-
-    def reset_events(self):
-        for fd in self.fd_groups:
-            fcntl.ioctl(fd[0], profiler.PERF_EVENT_IOC_RESET, 0)
-
-    def read_events(self):
-        """
-            Read from the events
-        """
-        data= []
-        for group in self.fd_groups:
-            raw= os.read(group[0], 4096)
-            to_read= int(len(raw)/8)
-            raw= struct.unpack('q'*to_read ,raw)
-            data+=raw
-        return data
-
-    def initialize(self):
+    def __initialize(self):
         """
             Prepare to run the workload
         """
         try:
-            self.destroy_events()
-            self.kill_program()
+            self.__destroy_events()
+            self.__kill_program()
             self.program= workload.Workload(workload.stringVec(self.program_args))
             self.program.MAX_SIZE_GROUP= 512
-            self.create_events()
+            self.__create_events(self.program.pid)
             for group in self.fd_groups:
                 self.program.add_events(workload.intVec([group[0]]))
         except:
-            self.kill_program()
+            self.__kill_program()
             raise
 
-    def run_python(self, period, reset=False):
-        """
-            period : float period of sampling in seconds
-            reset : reset the counters on sampling
-
-            Run the workload on background and sample on python
-        """
-        self.initialize()
-        self.program.start()
-        data= []
-        while self.program.isAlive:
-            time.sleep(period)
-            data.append(self.read_events())
-            if reset: self.reset_events()
-        data.append(self.read_events())
-
-        return self.format_data(data)
-        
-    def run(self, period, reset=False):
-        """
-        period : float period of sampling in seconds
-        reset : reset the counters on sampling
-
-        Run the workload and sample on the c++ module blocking
-        """
-        self.initialize()
-        data= self.program.run(reset, period*1e6)
-        aux= []
-        for v in data:
-            aux.append(list(v))
-        
-        return self.format_data(data)
-    
-    def format_data(self, data):
+    def __format_data(self, data):
         """
         Format the data
 
@@ -229,3 +169,92 @@ class profiler:
                     c+=1
             all_data.append(only_s)
         return all_data
+
+    def set_program(self, program_args):
+        self.program_args= program_args
+
+    def enable_events(self):
+        """
+            Enable the events
+        """
+        for fd in self.fd_groups:
+            fcntl.ioctl(fd[0], profiler.PERF_EVENT_IOC_ENABLE, 0)
+
+    def disable_events(self):
+        """
+            Disable the events
+        """
+        for fd in self.fd_groups:
+            fcntl.ioctl(fd[0], profiler.PERF_EVENT_IOC_DISABLE, 0)
+
+    def reset_events(self):
+        for fd in self.fd_groups:
+            fcntl.ioctl(fd[0], profiler.PERF_EVENT_IOC_RESET, 0)
+
+    def read_events(self):
+        """
+            Read from the events
+        """
+        data= []
+        for group in self.fd_groups:
+            raw= os.read(group[0], 4096)
+            to_read= int(len(raw)/8)
+            raw= struct.unpack('q'*to_read ,raw)
+            data+=raw
+        return data
+
+    def start_counters(self, pid):
+        self.__create_events(pid)
+        self.reset_events()
+        self.enable_events()
+
+    def run_python(self, sample_period, reset_on_sample=False):
+        """
+            sample_period : float period of sampling in seconds
+            reset_on_sample : reset the counters on sampling
+
+            return: samples
+
+            Run the workload on background and sample on python
+        """
+        if not self.program_args: 
+            raise Exception("Need a program ars tor run")
+        self.__initialize()
+        self.reset_events()
+        self.enable_events()
+        self.program.start()
+        data= []
+        while self.program.isAlive:
+            time.sleep(sample_period)
+            data.append(self.read_events())
+            if reset_on_sample: self.reset_events()
+        data.append(self.read_events())
+
+        return self.__format_data(data)
+    
+    def run_background(self):
+        if not self.program_args: 
+            raise Exception("Need a program ars tor run")
+        self.__initialize()
+        self.program.start()
+
+        
+    def run(self, sample_period, reset_on_sample=False):
+        """
+        sample_period : float period of sampling in seconds
+        reset_on_sample : reset the counters on sampling
+
+        return: samples
+
+        Run the workload and sample on the c++ module blocking
+        """
+        if not self.program_args: 
+            raise Exception("Need a program ars tor run")
+        self.__initialize()
+        data= self.program.run(reset_on_sample, sample_period*1e6)
+        aux= []
+        for v in data:
+            aux.append(list(v))
+        
+        return self.__format_data(data)
+    
