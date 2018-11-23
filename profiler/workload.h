@@ -13,7 +13,7 @@ private:
     int create_wrokload(char **argv);
     void wait_finish();
 public:
-    int MAX_SIZE_GROUP= 30;
+    int MAX_SIZE_GROUP= 512;
     int pid, isAlive;
 
     Workload(std::vector<std::string> args);
