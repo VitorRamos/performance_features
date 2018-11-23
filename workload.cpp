@@ -6,6 +6,7 @@
 #include <sys/stat.h>
 #include <sys/ptrace.h>
 #include <sys/wait.h>
+#include <memory.h>
 
 #include <linux/perf_event.h>
 
@@ -63,44 +64,39 @@ void Workload::wait_finish()
 
 void Workload::start()
 {
-    int status;
-    waitpid(pid, &status, 0);
-    ptrace(PTRACE_CONT, pid, 0, 0);
-    waiter = new thread(&Workload::wait_finish, this);
-}
-
-
-void Workload::add_event(std::vector<int> fds_)
-{
-    fds= move(fds_);
-}
-
-vector<signed long int> Workload::sample(bool& reset)
-{
-    vector<signed long int> row;
-    for(int i=0; i<fds.size(); i++)
+    if(isAlive)
     {
-        signed long int buff[30];
-        ssize_t bytes_read= read(fds[i], buff, 100*sizeof(signed long int));
-        if(reset) ioctl(fds[i], PERF_EVENT_IOC_RESET, PERF_IOC_FLAG_GROUP);
-        if(bytes_read <= 0)
-            throw "Error on sampling ";
-        for(int j=0; j<bytes_read/8; j++)
-            row.push_back(buff[j]);
+        int status;
+        waitpid(pid, &status, 0);
+        ptrace(PTRACE_CONT, pid, 0, 0);
+        waiter = new thread(&Workload::wait_finish, this);
     }
-    return row;
+}
+
+void Workload::add_events(std::vector<int> fds_)
+{
+    //fds= move(fds_);
+    fds.insert(fds.end(), fds_.begin(), fds_.end());
 }
 
 vector<vector<signed long int>> Workload::run(bool reset, double sample_perid)
 {
+    const int MAX_SIZE_GROUP= 30;
     vector<vector<signed long int>> samples;
-    int status;
-    waitpid(pid, &status, 0);
-    for(int i=0; i<fds.size(); i++)
+    vector<signed long int> row;
+    signed long int buff[MAX_SIZE_GROUP];
+    ssize_t bytes_read;
+    int i, status;
+
+    samples.reserve(1000);
+    row.reserve(300);
+
+    for(i=0; i<fds.size(); i++)
     {
         ioctl(fds[i], PERF_EVENT_IOC_RESET, PERF_IOC_FLAG_GROUP);
         ioctl(fds[i], PERF_EVENT_IOC_ENABLE, PERF_IOC_FLAG_GROUP);
     }
+    waitpid(pid, &status, 0);
     ptrace(PTRACE_CONT, pid, 0, 0);
     while(1)
     {
@@ -108,10 +104,30 @@ vector<vector<signed long int>> Workload::run(bool reset, double sample_perid)
         if (WIFEXITED(status))
             break;
         
-        samples.push_back(sample(reset));
         usleep(sample_perid);
+        row.clear();
+        for(i=0; i<fds.size(); i++)
+        {
+            bytes_read= read(fds[i], buff, MAX_SIZE_GROUP*sizeof(signed long int));
+            if(reset) ioctl(fds[i], PERF_EVENT_IOC_RESET, PERF_IOC_FLAG_GROUP);
+            if(bytes_read <= 0)
+                throw "Error on sampling ";
+            
+            copy(buff, buff+bytes_read/8, back_inserter(row));
+        }
+        samples.push_back(row);
     }
-    samples.push_back(sample(reset));
     isAlive= 0;
+    row.clear();
+    for(i=0; i<fds.size(); i++)
+    {
+        bytes_read= read(fds[i], buff, MAX_SIZE_GROUP*sizeof(signed long int));
+        if(reset) ioctl(fds[i], PERF_EVENT_IOC_RESET, PERF_IOC_FLAG_GROUP);
+        if(bytes_read <= 0)
+            throw "Error on sampling ";
+        
+        copy(buff, buff+bytes_read/8, back_inserter(row));
+    }
+    samples.push_back(row);
     return samples;
 }

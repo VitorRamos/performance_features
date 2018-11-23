@@ -184,11 +184,8 @@ class Workload(_object):
     def start(self):
         return _workload.Workload_start(self)
 
-    def add_event(self, fds_):
-        return _workload.Workload_add_event(self, fds_)
-
-    def sample(self, reset):
-        return _workload.Workload_sample(self, reset)
+    def add_events(self, fds_):
+        return _workload.Workload_add_events(self, fds_)
 
     def run(self, reset, sample_perid):
         return _workload.Workload_run(self, reset, sample_perid)
