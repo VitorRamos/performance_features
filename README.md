@@ -33,10 +33,12 @@ The file descriptors are passed to the workload module develop on c++ which star
 
 ## Installation
 Dependencies
+```bash
 sudo apt install python-dev swig libpfm4-dev
 git clone ...
 chmod +x profiler/compile
 ./profiler/compile
+```
 
 <a name="usage"/>
 
