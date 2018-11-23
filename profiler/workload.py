@@ -165,6 +165,10 @@ class Workload(_object):
     __swig_getmethods__ = {}
     __getattr__ = lambda self, name: _swig_getattr(self, Workload, name)
     __repr__ = _swig_repr
+    __swig_setmethods__["MAX_SIZE_GROUP"] = _workload.Workload_MAX_SIZE_GROUP_set
+    __swig_getmethods__["MAX_SIZE_GROUP"] = _workload.Workload_MAX_SIZE_GROUP_get
+    if _newclass:
+        MAX_SIZE_GROUP = _swig_property(_workload.Workload_MAX_SIZE_GROUP_get, _workload.Workload_MAX_SIZE_GROUP_set)
     __swig_setmethods__["pid"] = _workload.Workload_pid_set
     __swig_getmethods__["pid"] = _workload.Workload_pid_get
     if _newclass:

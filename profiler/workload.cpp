@@ -37,6 +37,8 @@ Workload::Workload(vector<string> args)
 int Workload::create_wrokload(char **argv)
 {
     int pid = fork();
+    if(pid < 0)
+        throw "Error on fork";
     if (pid == 0)
     {
         int fd = open("out.stdout", O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR);
@@ -75,13 +77,11 @@ void Workload::start()
 
 void Workload::add_events(std::vector<int> fds_)
 {
-    //fds= move(fds_);
     fds.insert(fds.end(), fds_.begin(), fds_.end());
 }
 
 vector<vector<signed long int>> Workload::run(bool reset, double sample_perid)
 {
-    const int MAX_SIZE_GROUP= 30;
     vector<vector<signed long int>> samples;
     vector<signed long int> row;
     signed long int buff[MAX_SIZE_GROUP];
