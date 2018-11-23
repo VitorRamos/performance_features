@@ -1,9 +1,9 @@
 import perfmon
 
-class events:
+class list_events:
     def __init__(self):
         self.system = perfmon.System()
-        
+
     def get_supported_pmus(self):
             pmus= []
             for pmu in self.system.pmus:

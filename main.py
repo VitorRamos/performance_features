@@ -1,8 +1,10 @@
-from profiler import profiler
+from profiler import profiler, list_events
 import pandas as pd
 import numpy as np
 
 try:
+    print(list_events().get_supported_pmus())
+    print(list_events().get_supported_events())
     events= [['PERF_COUNT_HW_INSTRUCTIONS'], 
             ['PERF_COUNT_HW_CACHE_LL'], 
             ['PERF_COUNT_HW_BRANCH_INSTRUCTIONS','PERF_COUNT_HW_BRANCH_MISSES'],

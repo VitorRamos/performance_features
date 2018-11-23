@@ -2,8 +2,8 @@
     This module provie a high level api to linux perf events witout overhead while executing
 
     How it works:
-        Using perfmon python wrapper to the system calls and structures the file descriptores are created
-        The file descritores are passed to the workload module develop on c++ wich start the target application and sample the file descriptors
+        Using perfmon python wrapper to the system calls and structures the file descriptors are created
+        The file descriptors are passed to the workload module develop on c++ wich start the target application and sample the file descriptors
     
 """
 
@@ -109,7 +109,7 @@ class profiler:
 
     def kill_program(self):
         """
-        Kill the workload if still alive
+            Kill the workload if still alive
         """
         if self.program and self.program.isAlive:
             print("Killing process", self.program.pid)
@@ -118,14 +118,14 @@ class profiler:
 
     def enable_events(self):
         """
-        Enable the events
+            Enable the events
         """
         for fd in self.fd_groups:
             fcntl.ioctl(fd[0], profiler.PERF_EVENT_IOC_ENABLE, 0)
 
     def disable_events(self):
         """
-        Disable the events
+            Disable the events
         """
         for fd in self.fd_groups:
             fcntl.ioctl(fd[0], profiler.PERF_EVENT_IOC_DISABLE, 0)
@@ -136,7 +136,7 @@ class profiler:
 
     def read_events(self):
         """
-        Read from the events
+            Read from the events
         """
         data= []
         for group in self.fd_groups:
@@ -148,7 +148,7 @@ class profiler:
 
     def initialize(self):
         """
-        Prepare to run the workload
+            Prepare to run the workload
         """
         try:
             self.destroy_events()
@@ -164,10 +164,10 @@ class profiler:
 
     def run_python(self, period, reset=False):
         """
-        period : float period of sampling in secounds
-        reset : reset the counters on sampling
+            period : float period of sampling in seconds
+            reset : reset the counters on sampling
 
-        Run the workload on background and sample on python
+            Run the workload on background and sample on python
         """
         self.initialize()
         self.program.start()
@@ -182,7 +182,7 @@ class profiler:
         
     def run(self, period, reset=False):
         """
-        period : float period of sampling in secounds
+        period : float period of sampling in seconds
         reset : reset the counters on sampling
 
         Run the workload and sample on the c++ module blocking
