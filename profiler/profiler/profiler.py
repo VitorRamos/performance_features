@@ -23,7 +23,6 @@ class profiler:
             events_groups : list of list of event names, each list is a event group with event leader the first name
         """
         self.__check_paranoid()
-        self.system = perfmon.System()
         self.event_groups_names = events_groups
         self.event_groups = []
         self.fd_groups = []

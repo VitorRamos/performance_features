@@ -85,9 +85,9 @@ vector<vector<signed long int>> Workload::run(bool reset, double sample_perid)
 {
     vector<vector<signed long int>> samples;
     vector<signed long int> row(MAX_SIZE_GROUP);
-    signed long int buff[MAX_SIZE_GROUP];
     ssize_t bytes_read;
-    int i, status;
+    unsigned int i;
+    int status;
 
     samples.reserve(1000);
 
