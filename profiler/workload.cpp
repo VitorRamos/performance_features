@@ -29,13 +29,13 @@ char** convert(const vector<string>& v)
 
 Workload::Workload(vector<string> args)
 {
-    char** p_args= convert(args);
-    this->pid= create_wrokload(p_args);
+    this->pid= create_wrokload(args);
     this->isAlive= 1;
 }
 
-int Workload::create_wrokload(char **argv)
+int Workload::create_wrokload(const vector<string>& args)
 {
+    char **argv= convert(args);
     int pid = fork();
     if(pid < 0)
         throw "Error on fork";
@@ -49,6 +49,7 @@ int Workload::create_wrokload(char **argv)
         if (execl(argv[0], (const char *)argv, NULL) < 0)
             throw "Error executing program";
     }
+    delete []argv;
     return pid;
 }
 
@@ -57,7 +58,7 @@ void Workload::wait_finish()
     int status;
     while(1)
     {
-        waitpid(pid, &status, WNOHANG);
+        waitpid(pid, &status, 0);
         if (WIFEXITED(status))
             break;
     }

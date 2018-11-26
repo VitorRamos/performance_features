@@ -176,6 +176,9 @@ class profiler:
         return all_data
 
     def set_program(self, program_args):
+        """
+            Set the program args
+        """
         self.program_args= program_args
 
     def enable_events(self):
@@ -193,6 +196,9 @@ class profiler:
             fcntl.ioctl(fd[0], profiler.PERF_EVENT_IOC_DISABLE, 0)
 
     def reset_events(self):
+        """
+            Reset the events
+        """
         for fd in self.fd_groups:
             fcntl.ioctl(fd[0], profiler.PERF_EVENT_IOC_RESET, 0)
 
@@ -209,6 +215,9 @@ class profiler:
         return data
 
     def start_counters(self, pid):
+        """
+            Reset and start the counters
+        """
         self.__create_events(pid)
         self.reset_events()
         self.enable_events()
@@ -238,6 +247,9 @@ class profiler:
         return self.__format_data(data)
     
     def run_background(self):
+        """
+            Run the program on backgroun, not sampling
+        """
         if not self.program_args: 
             raise Exception("Need a program ars tor run")
         self.__initialize()
@@ -257,9 +269,6 @@ class profiler:
             raise Exception("Need a program ars tor run")
         self.__initialize()
         data= self.program.run(reset_on_sample, sample_period*1e6)
-        aux= []
-        for v in data:
-            aux.append(list(v))
-        
-        return self.__format_data(data)
+        aux= [list(v) for v in data]
+        return self.__format_data(aux)
     
