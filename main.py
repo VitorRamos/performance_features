@@ -18,12 +18,12 @@ def from_pid(events, pid):
 
 def workload(events):
     perf= profiler(program_args= ['./hello'], events_groups=events)
-    data= perf.run(sample_period= 0.01, reset_on_sample=True)
+    data= perf.run(sample_period= 0.00, reset_on_sample=True)
     return data
 
 def python_workload(events):
     perf= profiler(program_args= ['./hello'], events_groups=events)
-    data= perf.run_python(sample_period= 0.01, reset_on_sample=True)
+    data= perf.run_python(sample_period= 0.00, reset_on_sample=True)
     return data
 
 events= [['PERF_COUNT_HW_INSTRUCTIONS'], 
@@ -42,8 +42,8 @@ try:
 
     data= workload(events)
     print("C++ ", len(data), np.sum(data,axis=0))
-    # data= python_workload(events)
-    # print("Python ", len(data), np.sum(data,axis=0))
+    data= python_workload(events)
+    print("Python ", len(data), np.sum(data,axis=0))
     # data= from_pid(os.getppid(), rapl_evs)
 except RuntimeError as e:
     print(e.args[0])

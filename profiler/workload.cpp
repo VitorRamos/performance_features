@@ -105,7 +105,7 @@ vector<vector<signed long int>> Workload::run(bool reset, double sample_perid)
         if (WIFEXITED(status))
             break;
         
-        usleep(sample_perid);
+        if(sample_perid) usleep(sample_perid);
         row.clear();
         for(i=0; i<fds.size(); i++)
         {

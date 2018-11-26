@@ -10,7 +10,7 @@ class Workload
     std::vector<std::string> args;
     std::thread* waiter;
 private:
-    int create_wrokload(const vector<string>& args);
+    int create_wrokload(const std::vector<std::string>& args);
     void wait_finish();
 public:
     int MAX_SIZE_GROUP= 512;
