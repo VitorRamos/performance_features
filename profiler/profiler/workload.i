@@ -9,7 +9,7 @@
 %include "std_map.i"
 %include "stdint.i"
 
-%catches(const char*) Workload::Workload();
+%catches(const char*) Workload::Workload(std::vector<std::string> args);
 
 %include "workload.h"
 
