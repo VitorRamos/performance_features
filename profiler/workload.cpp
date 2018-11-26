@@ -84,13 +84,12 @@ void Workload::add_events(std::vector<int> fds_)
 vector<vector<signed long int>> Workload::run(bool reset, double sample_perid)
 {
     vector<vector<signed long int>> samples;
-    vector<signed long int> row;
+    vector<signed long int> row(MAX_SIZE_GROUP);
     signed long int buff[MAX_SIZE_GROUP];
     ssize_t bytes_read;
     int i, status;
 
     samples.reserve(1000);
-    row.reserve(300);
 
     for(i=0; i<fds.size(); i++)
     {
@@ -106,29 +105,28 @@ vector<vector<signed long int>> Workload::run(bool reset, double sample_perid)
             break;
         
         if(sample_perid) usleep(sample_perid);
-        row.clear();
+        
+        bytes_read= 0;
         for(i=0; i<fds.size(); i++)
         {
-            bytes_read= read(fds[i], buff, MAX_SIZE_GROUP*sizeof(signed long int));
+            bytes_read+= read(fds[i], &row[bytes_read/sizeof(signed long int)], MAX_SIZE_GROUP*sizeof(signed long int));
             if(reset) ioctl(fds[i], PERF_EVENT_IOC_RESET, PERF_IOC_FLAG_GROUP);
-            if(bytes_read <= 0)
-                throw "Error on sampling ";
-            
-            copy(buff, buff+bytes_read/8, back_inserter(row));
+            // if(bytes_read <= 0)
+            //     throw "Error on sampling ";
         }
+        row.resize(bytes_read/sizeof(signed long int));
         samples.push_back(row);
     }
     isAlive= 0;
-    row.clear();
+    bytes_read= 0;
     for(i=0; i<fds.size(); i++)
     {
-        bytes_read= read(fds[i], buff, MAX_SIZE_GROUP*sizeof(signed long int));
+        bytes_read+= read(fds[i], &row[bytes_read/sizeof(signed long int)], MAX_SIZE_GROUP*sizeof(signed long int));
         if(reset) ioctl(fds[i], PERF_EVENT_IOC_RESET, PERF_IOC_FLAG_GROUP);
-        if(bytes_read <= 0)
-            throw "Error on sampling ";
-        
-        copy(buff, buff+bytes_read/8, back_inserter(row));
+        // if(bytes_read <= 0)
+        //     throw "Error on sampling ";
     }
+    row.resize(bytes_read/sizeof(signed long int));
     samples.push_back(row);
     return samples;
 }
