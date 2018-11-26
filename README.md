@@ -32,7 +32,6 @@ The file descriptors are passed to the workload module develop on c++ which star
 <a name="install"/>
 
 ## Installation
-Dependencies
 ```bash
 sudo apt install python-dev swig libpfm4-dev
 pip install performance-features
