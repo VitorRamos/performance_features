@@ -39,9 +39,7 @@ rapl_evs= [['PERF_COUNT_HW_INSTRUCTIONS']]+rapl_evs
 try:
     # print(rapl_evs)
     # list_all_events()
-
     events+=rapl_evs
-
     data= workload(events)
     print("C++ ", len(data), np.sum(data,axis=0))
     data= python_workload(events)
