@@ -127,6 +127,7 @@ class profiler:
         """
             Prepare to run the workload
         """
+        #TODO solve the race condition
         try:
             self.__destroy_events()
             self.__kill_program()
@@ -136,7 +137,8 @@ class profiler:
             for group in self.fd_groups:
                 self.program.add_events(workload.intVec([group[0]]))
         except:
-            self.__kill_program()
+            print("Error on executing the program")
+            exit(0)
             raise
 
     def __format_data(self, data):
