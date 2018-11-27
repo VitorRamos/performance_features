@@ -11,7 +11,7 @@ from . import workload
 import perfmon
 import time, struct, os, signal, fcntl
 
-class profiler:
+class Profiler:
     PERF_EVENT_IOC_ENABLE = 0x2400
     PERF_EVENT_IOC_DISABLE = 0x2401
     PERF_EVENT_IOC_ID = 0x80082407
@@ -29,6 +29,9 @@ class profiler:
         self.program_args= program_args
         self.program= None
         self.__encode_events()
+
+    def __del__(self):
+        self.__destroy_events()
 
     def __check_paranoid(self):
         """
@@ -58,7 +61,11 @@ class profiler:
                 #TODO check err
                 if 'SYSTEMWIDE' in e:
                     e= e.split(':')[1]
-                err, encoding = perfmon.pfm_get_perf_event_encoding(e, perfmon.PFM_PLM0 | perfmon.PFM_PLM3, None, None)
+                try:
+                    err, encoding = perfmon.pfm_get_perf_event_encoding(e, perfmon.PFM_PLM0 | perfmon.PFM_PLM3, None, None)
+                except:
+                    print(e)
+                    raise
                 ev_list.append(encoding)
             self.event_groups.append(ev_list)
 
@@ -187,21 +194,21 @@ class profiler:
             Enable the events
         """
         for fd in self.fd_groups:
-            fcntl.ioctl(fd[0], profiler.PERF_EVENT_IOC_ENABLE, 0)
+            fcntl.ioctl(fd[0], Profiler.PERF_EVENT_IOC_ENABLE, 0)
 
     def disable_events(self):
         """
             Disable the events
         """
         for fd in self.fd_groups:
-            fcntl.ioctl(fd[0], profiler.PERF_EVENT_IOC_DISABLE, 0)
+            fcntl.ioctl(fd[0], Profiler.PERF_EVENT_IOC_DISABLE, 0)
 
     def reset_events(self):
         """
             Reset the events
         """
         for fd in self.fd_groups:
-            fcntl.ioctl(fd[0], profiler.PERF_EVENT_IOC_RESET, 0)
+            fcntl.ioctl(fd[0], Profiler.PERF_EVENT_IOC_RESET, 0)
 
     def read_events(self):
         """
@@ -269,7 +276,7 @@ class profiler:
         if not self.program_args: 
             raise Exception("Need a program ars tor run")
         self.__initialize()
-        data= self.program.run(reset_on_sample, sample_period*1e6)
+        data= self.program.run(sample_perid=sample_period*1e6, reset=reset_on_sample)
         aux= [list(v) for v in data]
         return self.__format_data(aux)
     
