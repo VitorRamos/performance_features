@@ -1,4 +1,4 @@
-from profiler import profiler, list_events
+from profiler import Profiler, list_events
 import pandas as pd
 import numpy as np
 import time, os
@@ -8,7 +8,7 @@ def list_all_events():
     print(list_events().get_supported_events())
 
 def from_pid(events, pid):
-    perf= profiler(events_groups=events)
+    perf= Profiler(events_groups=events)
     perf.start_counters(pid)
     data= []
     while os.path.isdir('/proc/{}'.format(pid)):
@@ -17,12 +17,12 @@ def from_pid(events, pid):
     return data
 
 def workload(events):
-    perf= profiler(program_args= ['./hello'], events_groups=events)
+    perf= Profiler(program_args= ['./hello'], events_groups=events)
     data= perf.run(sample_period= 0.01, reset_on_sample=True)
     return data
 
 def python_workload(events):
-    perf= profiler(program_args= ['./hello'], events_groups=events)
+    perf= Profiler(program_args= ['./hello'], events_groups=events)
     data= perf.run_python(sample_period= 0.01, reset_on_sample=True)
     return data
 
