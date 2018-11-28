@@ -48,7 +48,7 @@ class Profiler:
         """
         with open('/proc/sys/kernel/perf_event_paranoid', 'r') as f:
             val= int(f.read())
-            if val != -1:
+            if val >= 2:
                 raise Exception("Paranoid enable")
 
     def __encode_events(self):
@@ -84,9 +84,9 @@ class Profiler:
                 e.read_format= perfmon.PERF_FORMAT_GROUP  | perfmon.PERF_FORMAT_TOTAL_TIME_ENABLED
                 fd= perfmon.perf_event_open(e, pid, -1, -1, 0)
                 if fd < 1:
-                    raise Exception("Error creating fd")
+                    raise Exception("Error creating fd"+group_name[0])
                 fd_list.append(fd)
-                for e in group[1:]:
+                for e, e_name in zip(group[1:],group_name[1:]):
                     e.exclude_kernel = 1
                     e.exclude_hv = 1
                     e.inherit= 1
@@ -94,7 +94,7 @@ class Profiler:
                     e.read_format= perfmon.PERF_FORMAT_GROUP  | perfmon.PERF_FORMAT_TOTAL_TIME_ENABLED
                     fd= perfmon.perf_event_open(e, pid, -1, fd_list[0], 0)
                     if fd < 1: 
-                        raise Exception("Error creating fd")
+                        raise Exception("Error creating fd"+e_name)
                     fd_list.append(fd)
             else:
                 for e, e_name in zip(group,group_name):
@@ -108,7 +108,7 @@ class Profiler:
                         fd= perfmon.perf_event_open(e, pid, -1, -1, 0)
 
                     if fd < 0: 
-                        raise Exception("Erro creating fd")
+                        raise Exception("Erro creating fd"+e_name)
                     fd_list.append(fd)
             self.fd_groups.append(fd_list)
     
@@ -143,8 +143,8 @@ class Profiler:
             self.__create_events(self.program.pid)
             for group in self.fd_groups:
                 self.program.add_events(workload.intVec([group[0]]))
-        except:
-            print("Error on executing the program")
+        except Exception as e :
+            print("Error on initialization", e)
             exit(0)
             raise
 
