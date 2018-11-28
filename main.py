@@ -13,7 +13,7 @@ try:
     hw_groups= split_n(hardware_events, 10)
     evs_monitor= hw_groups[0:1]+[software_events]
     
-    program= Profiler(program_args=['asdasd'], events_groups=evs_monitor)
+    program= Profiler(program_args=['/bin/sleep','0'], events_groups=evs_monitor)
     data= program.run(sample_period=0.01,reset_on_sample=False)
     # df= pd.DataFrame(data, columns= flat_list(evs_monitor) )
     # df.to_csv('data.csv')
