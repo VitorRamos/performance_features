@@ -11,7 +11,7 @@ from . import workload
 import perfmon
 import time, struct, os, signal, fcntl
 
-class profiler:
+class Profiler:
     PERF_EVENT_IOC_ENABLE = 0x2400
     PERF_EVENT_IOC_DISABLE = 0x2401
     PERF_EVENT_IOC_ID = 0x80082407
@@ -30,6 +30,9 @@ class profiler:
         self.program= None
         self.__encode_events()
 
+    def __del__(self):
+        self.__destroy_events()
+
     def __check_paranoid(self):
         """
         Check perf_event_paranoid wich Controls use of the performance events 
@@ -45,7 +48,7 @@ class profiler:
         """
         with open('/proc/sys/kernel/perf_event_paranoid', 'r') as f:
             val= int(f.read())
-            if val != -1:
+            if val >= 2:
                 raise Exception("Paranoid enable")
 
     def __encode_events(self):
@@ -58,7 +61,11 @@ class profiler:
                 #TODO check err
                 if 'SYSTEMWIDE' in e:
                     e= e.split(':')[1]
-                err, encoding = perfmon.pfm_get_perf_event_encoding(e, perfmon.PFM_PLM0 | perfmon.PFM_PLM3, None, None)
+                try:
+                    err, encoding = perfmon.pfm_get_perf_event_encoding(e, perfmon.PFM_PLM0 | perfmon.PFM_PLM3, None, None)
+                except:
+                    print(e)
+                    raise
                 ev_list.append(encoding)
             self.event_groups.append(ev_list)
 
@@ -77,9 +84,9 @@ class profiler:
                 e.read_format= perfmon.PERF_FORMAT_GROUP  | perfmon.PERF_FORMAT_TOTAL_TIME_ENABLED
                 fd= perfmon.perf_event_open(e, pid, -1, -1, 0)
                 if fd < 1:
-                    raise Exception("Error creating fd")
+                    raise Exception("Error creating fd"+group_name[0])
                 fd_list.append(fd)
-                for e in group[1:]:
+                for e, e_name in zip(group[1:],group_name[1:]):
                     e.exclude_kernel = 1
                     e.exclude_hv = 1
                     e.inherit= 1
@@ -87,7 +94,7 @@ class profiler:
                     e.read_format= perfmon.PERF_FORMAT_GROUP  | perfmon.PERF_FORMAT_TOTAL_TIME_ENABLED
                     fd= perfmon.perf_event_open(e, pid, -1, fd_list[0], 0)
                     if fd < 1: 
-                        raise Exception("Error creating fd")
+                        raise Exception("Error creating fd"+e_name)
                     fd_list.append(fd)
             else:
                 for e, e_name in zip(group,group_name):
@@ -101,7 +108,7 @@ class profiler:
                         fd= perfmon.perf_event_open(e, pid, -1, -1, 0)
 
                     if fd < 0: 
-                        raise Exception("Erro creating fd")
+                        raise Exception("Erro creating fd"+e_name)
                     fd_list.append(fd)
             self.fd_groups.append(fd_list)
     
@@ -136,8 +143,8 @@ class profiler:
             self.__create_events(self.program.pid)
             for group in self.fd_groups:
                 self.program.add_events(workload.intVec([group[0]]))
-        except:
-            print("Error on executing the program")
+        except Exception as e :
+            print("Error on initialization", e)
             exit(0)
             raise
 
@@ -187,21 +194,21 @@ class profiler:
             Enable the events
         """
         for fd in self.fd_groups:
-            fcntl.ioctl(fd[0], profiler.PERF_EVENT_IOC_ENABLE, 0)
+            fcntl.ioctl(fd[0], Profiler.PERF_EVENT_IOC_ENABLE, 0)
 
     def disable_events(self):
         """
             Disable the events
         """
         for fd in self.fd_groups:
-            fcntl.ioctl(fd[0], profiler.PERF_EVENT_IOC_DISABLE, 0)
+            fcntl.ioctl(fd[0], Profiler.PERF_EVENT_IOC_DISABLE, 0)
 
     def reset_events(self):
         """
             Reset the events
         """
         for fd in self.fd_groups:
-            fcntl.ioctl(fd[0], profiler.PERF_EVENT_IOC_RESET, 0)
+            fcntl.ioctl(fd[0], Profiler.PERF_EVENT_IOC_RESET, 0)
 
     def read_events(self):
         """
@@ -269,7 +276,7 @@ class profiler:
         if not self.program_args: 
             raise Exception("Need a program ars tor run")
         self.__initialize()
-        data= self.program.run(reset_on_sample, sample_period*1e6)
+        data= self.program.run(sample_perid=sample_period*1e6, reset=reset_on_sample)
         aux= [list(v) for v in data]
         return self.__format_data(aux)
     
