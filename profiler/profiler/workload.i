@@ -10,6 +10,7 @@
 %include "stdint.i"
 
 %catches(const char*) Workload::Workload(std::vector<std::string> args);
+%catches(const char*) Workload::run(double, bool);
 
 %include "workload.h"
 

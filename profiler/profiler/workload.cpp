@@ -40,13 +40,14 @@ int Workload::create_wrokload(const vector<string>& args)
         throw "Error on fork";
     if (pid == 0)
     {
-        // int fd = open("out.stdout", O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR);
-        // dup2(fd, STDOUT_FILENO);
-        // fd = open("out.stderr", O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR);
-        // dup2(fd, STDERR_FILENO);
+        int fd = open("out.stdout", O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR);
+        dup2(fd, STDOUT_FILENO);
+        fd = open("out.stderr", O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR);
+        dup2(fd, STDERR_FILENO);
         ptrace(PTRACE_TRACEME, 0, 0, 0);
         if (execv(argv[0], argv) < 0)
             throw "Error executing program";
+        this->isAlive= 0;
     }
     delete []argv;
     return pid;
@@ -87,9 +88,10 @@ vector<vector<signed long int>> Workload::run(double sample_perid, bool reset)
     ssize_t bytes_read;
     unsigned int i;
     int status;
-
     samples.reserve(1000);
 
+    if(!this->isAlive)
+        throw "Attempt to execute a dead program";
 
     waitpid(pid, &status, 0);
     for(i=0; i<fds.size(); i++)

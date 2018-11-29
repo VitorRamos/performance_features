@@ -143,8 +143,8 @@ class Profiler:
             self.__create_events(self.program.pid)
             for group in self.fd_groups:
                 self.program.add_events(workload.intVec([group[0]]))
-        except Exception as e :
-            print("Error on initialization", e)
+        except Exception as e:
+            print(e)
             exit(0)
             raise
 
