@@ -43,19 +43,21 @@ pip install performance-features
 
 ### List events
 ```python
-from profiler import list_events
-print(list_events().get_supported_pmus())
-print(list_events().get_supported_events())
+from profiler import *
+
+print(get_supported_pmus())
+print(get_supported_events())
 ```
 
 ### Sampling events
 ```python
-from profiler import profiler
+from profiler import *
+
 try:
-    events= [['PERF_COUNT_HW_INSTRUCTIONS'], 
+    events= [['PERF_COUNT_HW_INSTRUCTIONS'],
             ['PERF_COUNT_HW_BRANCH_INSTRUCTIONS','PERF_COUNT_HW_BRANCH_MISSES'],
             ['PERF_COUNT_SW_PAGE_FAULTS']]
-    perf= profiler(program_args= ['/bin/sleep','1'], events_groups=events)
+    perf= Profiler(program_args= ['/bin/ls','/'], events_groups=events)
     data= perf.run(sample_period= 0.01)
     print(data)
 except RuntimeError as e:

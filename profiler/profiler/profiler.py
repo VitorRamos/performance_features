@@ -22,12 +22,12 @@ class Profiler:
             program_args : list with program name and arguments to run
             events_groups : list of list of event names, each list is a event group with event leader the first name
         """
-        self.__check_paranoid()
         self.event_groups_names = events_groups
         self.event_groups = []
         self.fd_groups = []
         self.program_args= program_args
         self.program= None
+        self.__check_paranoid()
         self.__encode_events()
 
     def __del__(self):
