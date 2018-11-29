@@ -17,7 +17,6 @@
 
 using namespace std;
 
-
 char** convert(const vector<string>& v)
 {
     char** args= new char*[v.size()+1];
@@ -41,12 +40,12 @@ int Workload::create_wrokload(const vector<string>& args)
         throw "Error on fork";
     if (pid == 0)
     {
-        int fd = open("out.stdout", O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR);
-        dup2(fd, STDOUT_FILENO);
-        fd = open("out.stderr", O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR);
-        dup2(fd, STDERR_FILENO);
+        // int fd = open("out.stdout", O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR);
+        // dup2(fd, STDOUT_FILENO);
+        // fd = open("out.stderr", O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR);
+        // dup2(fd, STDERR_FILENO);
         ptrace(PTRACE_TRACEME, 0, 0, 0);
-        if (execl(argv[0], (const char *)argv, NULL) < 0)
+        if (execv(argv[0], argv) < 0)
             throw "Error executing program";
     }
     delete []argv;
@@ -81,7 +80,7 @@ void Workload::add_events(std::vector<int> fds_)
     fds.insert(fds.end(), fds_.begin(), fds_.end());
 }
 
-vector<vector<signed long int>> Workload::run(bool reset, double sample_perid)
+vector<vector<signed long int>> Workload::run(double sample_perid, bool reset)
 {
     vector<vector<signed long int>> samples;
     vector<signed long int> row(MAX_SIZE_GROUP);
@@ -91,12 +90,13 @@ vector<vector<signed long int>> Workload::run(bool reset, double sample_perid)
 
     samples.reserve(1000);
 
+
+    waitpid(pid, &status, 0);
     for(i=0; i<fds.size(); i++)
     {
         ioctl(fds[i], PERF_EVENT_IOC_RESET, PERF_IOC_FLAG_GROUP);
         ioctl(fds[i], PERF_EVENT_IOC_ENABLE, PERF_IOC_FLAG_GROUP);
     }
-    waitpid(pid, &status, 0);
     ptrace(PTRACE_CONT, pid, 0, 0);
     while(1)
     {

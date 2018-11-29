@@ -191,8 +191,8 @@ class Workload(_object):
     def add_events(self, fds_):
         return _workload.Workload_add_events(self, fds_)
 
-    def run(self, reset, sample_perid):
-        return _workload.Workload_run(self, reset, sample_perid)
+    def run(self, sample_perid, reset):
+        return _workload.Workload_run(self, sample_perid, reset)
     __swig_destroy__ = _workload.delete_Workload
     __del__ = lambda self: None
 Workload_swigregister = _workload.Workload_swigregister

@@ -23,5 +23,5 @@ public:
 
     // stat forground and sample on fds
     void add_events(std::vector<int> fds_);
-    std::vector<std::vector<signed long int>> run(bool reset, double sample_perid);
+    std::vector<std::vector<signed long int>> run(double sample_perid, bool reset);
 };
