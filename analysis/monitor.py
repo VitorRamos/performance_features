@@ -1,4 +1,4 @@
-from profiler import Profiler, get_event_description
+from profiler import *
 from tqdm import tqdm
 import os
 import pandas as pd
@@ -26,23 +26,35 @@ def run_program(pargs, to_monitor, n=30, sample_period=0.05, reset_on_sample= Fa
 # Interrest
 all_events= get_event_description()
 rapl_events=['SYSTEMWIDE:'+e[0] for e in all_events if 'RAPL' in e[0]]
-hw_events= double_list(['PERF_COUNT_HW_INSTRUCTIONS','PERF_COUNT_HW_BRANCH_INSTRUCTIONS','FP_COMP_OPS_EXE:X87',
-                       'PERF_COUNT_HW_BRANCH_MISSES', 'PERF_COUNT_HW_CACHE_MISSES'])
-mem_events= double_list(['MEM_UOPS_RETIRED:ALL_LOADS', 'MEM_UOPS_RETIRED:ALL_STORES'])
+hw_events= [['PERF_COUNT_HW_INSTRUCTIONS','PERF_COUNT_HW_BRANCH_INSTRUCTIONS', 'PERF_COUNT_HW_BRANCH_MISSES', 'PERF_COUNT_HW_CACHE_MISSES']]
+mem_events= [['PERF_COUNT_HW_INSTRUCTIONS','MEM_UOPS_RETIRED:ALL_LOADS', 'MEM_UOPS_RETIRED:ALL_STORES','FP_COMP_OPS_EXE:X87']]
 sw_events= [['PERF_COUNT_SW_CPU_CLOCK','PERF_COUNT_SW_PAGE_FAULTS','PERF_COUNT_SW_CONTEXT_SWITCHES',
                        'PERF_COUNT_SW_CPU_MIGRATIONS','PERF_COUNT_SW_PAGE_FAULTS_MAJ']]
 rapl_events= double_list(rapl_events)
-to_monitor= hw_events+mem_events+sw_events+rapl_events
+to_monitor= hw_events+sw_events+rapl_events
 
 for f in tqdm(os.listdir('polybench')):
     pdir= 'polybench/'+f
     if os.path.isdir(pdir): continue
-    n= 1
+    n= 15
     reset_on_sample= False
     sample_period= 0.05
     data= run_program(pargs=[pdir],to_monitor=to_monitor,n=n,reset_on_sample=reset_on_sample,sample_period=sample_period)
     to_save= {'n':n, 'sample_period':sample_period,'reset_on_sample':reset_on_sample, 'data':data, 'to_monitor':to_monitor}
     with open('{}.dat'.format(f),'wb+') as f:
+        pickle.dump(to_save, f)
+
+to_monitor= mem_events+sw_events+rapl_events
+
+for f in tqdm(os.listdir('polybench')):
+    pdir= 'polybench/'+f
+    if os.path.isdir(pdir): continue
+    n= 15
+    reset_on_sample= False
+    sample_period= 0.05
+    data= run_program(pargs=[pdir],to_monitor=to_monitor,n=n,reset_on_sample=reset_on_sample,sample_period=sample_period)
+    to_save= {'n':n, 'sample_period':sample_period,'reset_on_sample':reset_on_sample, 'data':data, 'to_monitor':to_monitor}
+    with open('{}_mem.dat'.format(f),'wb+') as f:
         pickle.dump(to_save, f)
 
 # with open('gemm_SMALL_DATASET.dat', 'rb+') as f:
