@@ -64,8 +64,7 @@ class Profiler:
                 try:
                     err, encoding = perfmon.pfm_get_perf_event_encoding(e, perfmon.PFM_PLM0 | perfmon.PFM_PLM3, None, None)
                 except:
-                    print(e)
-                    raise
+                    raise Exception("Error encoding "+e)
                 ev_list.append(encoding)
             self.event_groups.append(ev_list)
 
@@ -84,7 +83,7 @@ class Profiler:
                 e.read_format= perfmon.PERF_FORMAT_GROUP  | perfmon.PERF_FORMAT_TOTAL_TIME_ENABLED
                 fd= perfmon.perf_event_open(e, pid, -1, -1, 0)
                 if fd < 1:
-                    raise Exception("Error creating fd"+group_name[0])
+                    raise Exception("Error creating fd "+group_name[0])
                 fd_list.append(fd)
                 for e, e_name in zip(group[1:],group_name[1:]):
                     e.exclude_kernel = 1
@@ -94,7 +93,7 @@ class Profiler:
                     e.read_format= perfmon.PERF_FORMAT_GROUP  | perfmon.PERF_FORMAT_TOTAL_TIME_ENABLED
                     fd= perfmon.perf_event_open(e, pid, -1, fd_list[0], 0)
                     if fd < 1: 
-                        raise Exception("Error creating fd"+e_name)
+                        raise Exception("Error creating fd "+e_name)
                     fd_list.append(fd)
             else:
                 for e, e_name in zip(group,group_name):
@@ -108,7 +107,7 @@ class Profiler:
                         fd= perfmon.perf_event_open(e, pid, -1, -1, 0)
 
                     if fd < 0: 
-                        raise Exception("Erro creating fd"+e_name)
+                        raise Exception("Erro creating fd "+e_name)
                     fd_list.append(fd)
             self.fd_groups.append(fd_list)
     
@@ -129,6 +128,13 @@ class Profiler:
             print("Killing process", self.program.pid)
             self.program.start()
             os.kill(self.program.pid, signal.SIGKILL)
+            t_max= 0
+            while self.program.isAlive and t_max < 50:
+                time.sleep(0.1)
+                t_max+=1
+            if t_max >= 50:
+                raise Exception("Cant kill the program")
+                exit(0)
 
     def __initialize(self):
         """
@@ -144,8 +150,8 @@ class Profiler:
             for group in self.fd_groups:
                 self.program.add_events(workload.intVec([group[0]]))
         except Exception as e:
-            print(e)
-            exit(0)
+            self.__kill_program()
+            #exit(0)
             raise
 
     def __format_data(self, data):
