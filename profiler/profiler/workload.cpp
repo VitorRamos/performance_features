@@ -56,10 +56,9 @@ int Workload::create_wrokload(const vector<string>& args)
 void Workload::wait_finish()
 {
     int status;
-    while(1)
+    while(waitpid(pid, &status, 0))
     {
-        waitpid(pid, &status, 0);
-        if (WIFEXITED(status))
+        if (WIFEXITED(status) || WIFSIGNALED(status))
             break;
     }
     isAlive= 0;
