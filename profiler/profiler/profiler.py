@@ -79,7 +79,7 @@ class Profiler:
                 e.exclude_kernel = 1
                 e.exclude_hv = 1
                 e.inherit= 1
-                e.disable= 1
+                e.disabled= 1
                 e.read_format= perfmon.PERF_FORMAT_GROUP  | perfmon.PERF_FORMAT_TOTAL_TIME_ENABLED
                 fd= perfmon.perf_event_open(e, pid, -1, -1, 0)
                 if fd < 1:
@@ -89,7 +89,7 @@ class Profiler:
                     e.exclude_kernel = 1
                     e.exclude_hv = 1
                     e.inherit= 1
-                    e.disable= 1
+                    e.disabled= 1
                     e.read_format= perfmon.PERF_FORMAT_GROUP  | perfmon.PERF_FORMAT_TOTAL_TIME_ENABLED
                     fd= perfmon.perf_event_open(e, pid, -1, fd_list[0], 0)
                     if fd < 1: 
@@ -103,7 +103,7 @@ class Profiler:
                         e.exclude_kernel = 1
                         e.exclude_hv = 1
                         e.inherit= 1
-                        e.disable= 1
+                        e.disabled= 1
                         fd= perfmon.perf_event_open(e, pid, -1, -1, 0)
 
                     if fd < 0: 
@@ -247,6 +247,19 @@ class Profiler:
         """
         if not self.program_args: 
             raise Exception("Need a program ars tor run")
+
+        if sample_period < 0:
+            self.__initialize()
+            self.reset_events()
+            self.enable_events()
+            self.program.start()
+            data= []
+            while self.program.isAlive:
+                time.sleep(0.05)
+            data.append(self.read_events())
+            
+            return self.__format_data(data)
+
         self.__initialize()
         self.reset_events()
         self.enable_events()
@@ -256,6 +269,7 @@ class Profiler:
             time.sleep(sample_period)
             data.append(self.read_events())
             if reset_on_sample: self.reset_events()
+
         data.append(self.read_events())
 
         return self.__format_data(data)
