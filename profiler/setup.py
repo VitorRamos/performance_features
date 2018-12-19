@@ -6,7 +6,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name='performance_features',
-    version='0.1.1',
+    version='0.1.2',
     packages=['perfmon', 'profiler'],
     package_dir={ 'perfmon' : 'perfmon', 'profiler': 'profiler' },
     py_modules=['perfmon.perfmon_int', 'profiler.profiler'],
