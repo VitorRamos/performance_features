@@ -34,6 +34,7 @@ Workload::Workload(vector<string> args)
 
 int Workload::create_wrokload(const vector<string>& args)
 {
+    // pipe(pipe_fd);
     char **argv= convert(args);
     int pid = fork();
     if(pid < 0)
@@ -45,21 +46,48 @@ int Workload::create_wrokload(const vector<string>& args)
         fd = open("out.stderr", O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR);
         dup2(fd, STDERR_FILENO);
         ptrace(PTRACE_TRACEME, 0, 0, 0);
+        // close(pipe_fd[1]);
+        // int x=0;
+        // read(pipe_fd[0], &x, sizeof(int));
         if (execv(argv[0], argv) < 0)
-            throw "Error executing program";
-        this->isAlive= 0;
+        {
+            this->isAlive= 0; // not should happen
+            exit(-1);
+        }
     }
-    delete []argv;
-    return pid;
+    else
+    {
+        close(pipe_fd[0]);
+        delete []argv;
+        return pid;
+    }
 }
 
+// #include <signal.h>
+// #include <iostream>
+// using namespace std;
 void Workload::wait_finish()
 {
     int status;
     while(waitpid(pid, &status, 0))
     {
+        // cout << "STATUS " << status << endl;
+        // cout << "WIFCONTINUED " <<  WIFCONTINUED(status) << endl;
+        // cout << "WSTOPSIG " <<  WSTOPSIG(status) << endl;
+        // cout << "WIFSTOPPED " <<  WIFSTOPPED(status) << endl;
+        // cout << "WCOREDUMP " <<  WCOREDUMP(status) << endl;
+        // cout << "WTERMSIG " <<  WTERMSIG(status) << endl;
+        // cout << "WIFSIGNALED " <<  WIFSIGNALED(status) << endl;
+        // cout << "WEXITSTATUS " <<  WEXITSTATUS(status) << endl;
+        // cout << "WIFEXITED " <<  WIFEXITED(status) << endl;
         if (WIFEXITED(status) || WIFSIGNALED(status))
             break;
+        // if(WSTOPSIG(status))
+        // {
+        //     int st;
+        //     wait(&st);
+        //     break;   
+        // }
     }
     isAlive= 0;
 }
@@ -70,7 +98,10 @@ void Workload::start()
     {
         int status;
         waitpid(pid, &status, 0);
-        ptrace(PTRACE_CONT, pid, 0, 0);
+        if(ptrace(PTRACE_CONT, pid, 0, 0) < 0)
+            throw "Ptrace failed";
+        // int ok_= 1;
+        // write(pipe_fd[1], &ok_, sizeof(int));
         waiter = new thread(&Workload::wait_finish, this);
     }
 }
@@ -99,11 +130,16 @@ vector<vector<signed long int>> Workload::run(double sample_perid, bool reset)
         ioctl(fds[i], PERF_EVENT_IOC_RESET, PERF_IOC_FLAG_GROUP);
         ioctl(fds[i], PERF_EVENT_IOC_ENABLE, PERF_IOC_FLAG_GROUP);
     }
-    ptrace(PTRACE_CONT, pid, 0, 0);
+    if(ptrace(PTRACE_CONT, pid, 0, 0) < 0)
+    {
+        throw "Ptrace failed";
+    }
+    // int x= 1231231123;
+    // write(pipe_fd[1], &x, sizeof(int));
     while(1)
     {
         waitpid(pid, &status, hangs);
-        if (WIFEXITED(status))
+        if (WIFEXITED(status) || WIFSIGNALED(status))
             break;
         
         if(sample_perid) usleep(sample_perid);
