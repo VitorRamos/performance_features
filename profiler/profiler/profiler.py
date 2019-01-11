@@ -64,7 +64,8 @@ class Profiler:
                 try:
                     err, encoding = perfmon.pfm_get_perf_event_encoding(e, perfmon.PFM_PLM0 | perfmon.PFM_PLM3, None, None)
                 except:
-                    raise Exception("Error encoding "+e)
+                    #print("Error encoding : "+e)
+                    raise
                 ev_list.append(encoding)
             self.event_groups.append(ev_list)
 
@@ -134,7 +135,6 @@ class Profiler:
                 t_max+=1
             if t_max >= 50:
                 raise Exception("Cant kill the program")
-                exit(0)
 
     def __initialize(self):
         """
@@ -151,8 +151,10 @@ class Profiler:
                 self.program.add_events(workload.intVec([group[0]]))
         except Exception as e:
             self.__kill_program()
-            #exit(0)
             raise
+        finally:
+            pass #something really bad happen
+        
 
     def __format_data(self, data):
         """
@@ -299,4 +301,29 @@ class Profiler:
         data= self.program.run(sample_perid=sample_period*1e6, reset=reset_on_sample)
         aux= [list(v) for v in data]
         return self.__format_data(aux)
+
+def run_program(self, pargs, to_monitor, n=30, sample_period=0.05, reset_on_sample= False):
+    """
+        Run the program multiple times
+    """
+    try:
+        all_data= []
+        for i in range(n):
+            program= Profiler(program_args=pargs, events_groups=to_monitor)
+            data= program.run(sample_period=sample_period,reset_on_sample=reset_on_sample)
+            all_data.append(data)
+    except RuntimeError as e:
+        print(e.args[0])
+    finally:
+        print("Well...")
+    data= {'n':n, 'sample_period':sample_period,'reset_on_sample':reset_on_sample, 'data':all_data, 'to_monitor':to_monitor}
     
+    return data
+
+def save_data(self, data, name):
+        """
+            save data to file
+        """
+        import pickle
+        with open('{}.dat'.format(name),'wb+') as f:
+            pickle.dump(data, f)
