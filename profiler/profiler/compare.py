@@ -1,20 +1,21 @@
 from collections import defaultdict
-from scipy import interpolate
 import pandas as pd
 import numpy as np
 import pickle
 from matplotlib import pyplot as plt
 from scipy.signal import savgol_filter
+from scipy import interpolate
+from scipy.optimize import least_squares
 
 flat_list= lambda x: [ g for f in x for g in f ]
 double_list= lambda x: [[g] for g in x]
 split_n= lambda x, n: [x[i:i + n] for i in range(0, len(x), n)]
 
-
 class Analyser:
 
     def __init__(self, name):
         self.data= self.load_data(name)
+        self.compute_df()
     
     def load_data(self, name):
         """
@@ -24,7 +25,7 @@ class Analyser:
             data= pickle.load(f)
         return data
 
-    def smooth_df(self, verbose=False):
+    def compute_df(self, verbose=False):
         """
             Resume multiple runs in one dataframe
             
@@ -72,8 +73,32 @@ class Analyser:
             print("AVG 99% stds error", np.nanmean(3*q))
             print("MAX 68% stds error", np.nanmax(q))
             print("MAX 99% stds error", np.nanmax(3*q))
-        
+
+        # compute difference
+        def diff(df):
+            x= df.values
+            x= np.row_stack( (x[0,:] , x[1:,:]-x[:-1,:]) )
+            return pd.DataFrame(x, columns=df.columns)
+        med_avg= diff(med_avg)
+        self.df= med_avg
+
         return med_avg, std_avg
+
+    def interpolate(self, feature, npoints=100, filter_signal=True):
+        assert(self.df is not None)
+
+        f_series= np.trim_zeros(self.df[feature].values)
+        if f_series.shape[0] < 3:
+            raise Exception("Cant interpolate")
+
+        x0, y0= np.linspace(0,1,len(f_series)), f_series
+        tck = interpolate.splrep(x0, y0, s=0)
+        x1 = np.linspace(0,1,npoints)
+        y1 = interpolate.splev(x1, tck, der=0)
+
+        if filter_signal: y1= savgol_filter(y1,15,3)
+
+        return x1, y1
 
     @staticmethod
     def homography_tranform(x0, y0, x1, y1):
@@ -101,20 +126,13 @@ class Analyser:
     @staticmethod
     def scale_translation_matrix(x0,y0,x1,y1):
         """
-        R= [[s 0 tx]
-            [0 s ty]]
-        R*[x
-           y]=tx
-        
+            find the scale and translation matrix from (x0,y0) to (x1,y1)
         """
         def scf(c,x,y):
             return c[0]*x+c[1]-y
         
-        from scipy.optimize import least_squares
-        res= least_squares(scf,np.ones(2), args=(x0,x1), loss='cauchy')
-        Rx= res.x
-        res= least_squares(scf,np.ones(2), args=(y0,y1), loss='cauchy')
-        Ry= res.x
+        Rx= least_squares(scf,np.ones(2), args=(x0,x1), loss='soft_l1').x
+        Ry= least_squares(scf,np.ones(2), args=(y0,y1), loss='soft_l1').x
 
         # from scipy.linalg import inv
         # A= np.vstack((x0,np.ones(x0.shape))).T
@@ -127,119 +145,10 @@ class Analyser:
         P2= np.hstack( [x1,y1] ).reshape((-1,2),order='F')
 
         return t_p, np.mean( np.abs(t_p-P2) )
-
-    def interpolate(self, feature, npoints=100):
-        def diff(df):
-            x= df.values
-            x= np.row_stack( (x[0,:] , x[1:,:]-x[:-1,:]) )
-            return pd.DataFrame(x, columns=df.columns)
-
-        def smooth(y, box_pts):
-            box = np.ones(box_pts)/box_pts
-            y_smooth = np.convolve(y, box, mode='same')
-            return y_smooth
-
-        df_m, _= self.smooth_df()
-        df_m= diff(df_m)
-        #df_m= df_m.apply(lambda x: smooth(x,19))
-        #df_m= df_m.apply(lambda x: savgol_filter(x,npoints//2+1,3))
-
-        f_series= df_m[feature].values
-
-        x0, y0= np.linspace(0,1,len(f_series)), f_series
-        tck = interpolate.splrep(x0, y0, s=0)
-        x1 = np.linspace(0,1,npoints)
-        y1 = interpolate.splev(x1, tck, der=0)
-        y1= savgol_filter(y1,15,3)
-
-        return x1, y1
     
     @staticmethod
     def compare(a1, a2, feature='PERF_COUNT_HW_INSTRUCTIONS'):
-        plt.figure()
         x0, y0= a1.interpolate(feature=feature, npoints= 100)
         x1, y1= a2.interpolate(feature=feature, npoints= 100)
-        #y1= 2*y0+10+2*np.random.randn(*y0.shape)
-        # y0= np.log(y0)
-        # y1= np.log(y1)
         yt, err= Analyser.scale_translation_matrix(x0, y0, x1, y1)
-        
-        plt.plot(x0,y0,)
-        plt.plot(x0,y1,)
-        plt.plot(yt[:,0],yt[:,1])
-        plt.legend(['y0','y1','yt'])
-        plt.title(err)
-        return err
-
-
-# x0= np.arange(0,10,1)
-# y0= x0**2
-# y1= 2*x0**2+10
-
-# pt, err= Analyser.scale_translation_matrix(x0,y0,x0,y1)
-# plt.plot(x0,y0)
-# plt.plot(x0,y1)
-# plt.plot(pt[:,0],pt[:,1])
-# plt.title(err)
-# plt.legend(['y0','y1','yt'])
-# plt.show()
-# exit(0)
-
-x= Analyser('/home/vitor/Documents/performance_features/analysis/hpc_belgica_v2/2mm_LARGE_DATASET_mem.dat')
-y= Analyser('/home/vitor/Documents/performance_features/analysis/hpc_belgica_v2/2mm_EXTRALARGE_DATASET_mem.dat')
-for f in x.smooth_df()[0].columns[:]:
-    Analyser.compare(x,y,feature=f)
-plt.show()
-
-# def getHm(p1, p2):
-#     A = []
-#     for i in range(0, len(p1)):
-#         x, y = p1[i][0], p1[i][1]
-#         u, v = p2[i][0], p2[i][1]
-#         A.append([x, y, 1, 0, 0, 0, -u*x, -u*y, -u])
-#         A.append([0, 0, 0, x, y, 1, -v*x, -v*y, -v])
-#     A = np.asarray(A)
-#     U, S, Vh = np.linalg.svd(A)
-#     L = Vh[-1,:] / Vh[-1,-1]
-#     H = L.reshape(3, 3)
-#     return H
-
-# def fp(x, y):
-#     from scipy.optimize import least_squares
-
-#     poly= lambda c, x: sum( [c[n]*x**n for n in range(len(c))] )
-#     err= lambda c,x,y: poly(c,x)-y
-
-#     res= least_squares(err, np.ones(5), args=(x,y))
-#     spoly= lambda s: poly(res.x, s)
-#     return spoly
-
-
-# x= np.arange(0,10,0.5)
-# y= x**2
-# pol= fp(x, y)
-# print(pol(10))
-
-#pol= fp(np.linspace(0,inst_s.max(), len(inst_s)), inst_s)
-#plt.plot(np.linspace(0,inst_s.max(), len(inst_s)), pol(np.linspace(0,inst_s.max(), len(inst_s))))
-
-# from scipy import interpolate
-# def interp(name):
-#     x= Compare()
-#     data= x.load_data(name)
-#     df_m, df_std= x.smooth_df(data)
-
-#     inst_s= df_m['PERF_COUNT_HW_INSTRUCTIONS'].values
-#     x0= np.linspace(0,1,len(inst_s))
-#     y0= inst_s
-#     print(y0)
-
-#     tck = interpolate.splrep(x0, y0, s=0)
-#     x1= np.linspace(0,1,2*len(inst_s))
-#     y1 = interpolate.splev(x1, tck, der=0)
-#     plt.semilogy(x1,y1)
-
-#interp('analysis/hpc_belgica_v2/2mm_LARGE_DATASET_mem.dat')
-
-#plt.plot(x=x0,y=df_m['PERF_COUNT_HW_INSTRUCTIONS'])
-# plt.show()
+        return yt, err
