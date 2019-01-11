@@ -11,6 +11,7 @@
 
 %catches(const char*) Workload::Workload(std::vector<std::string> args);
 %catches(const char*) Workload::run(double, bool);
+%catches(const char*) Workload::start();
 
 %include "workload.h"
 

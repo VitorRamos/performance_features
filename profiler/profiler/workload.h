@@ -6,6 +6,7 @@
 
 class Workload
 {
+    //int pipe_fd[2];
     std::vector<int> fds;
     std::vector<std::string> args;
     std::thread* waiter;
