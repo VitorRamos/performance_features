@@ -57,7 +57,7 @@ int Workload::create_wrokload(const vector<string>& args)
     }
     else
     {
-        close(pipe_fd[0]);
+        //close(pipe_fd[0]);
         delete []argv;
         return pid;
     }
