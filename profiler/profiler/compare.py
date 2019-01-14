@@ -84,6 +84,40 @@ class Analyser:
 
         return med_avg, std_avg
 
+    def interpolated_df(self, npoints):
+        new_data= []
+        for r in self.data['data']:
+            x= np.asarray(r)
+            new_c= []
+            for c in range(x.shape[1]):
+                x0, y0= np.linspace(0,1,len(x[:,c])), x[:,c]
+                tck = interpolate.splrep(x0, y0, s=0)
+                x1 = np.linspace(0,1,npoints)
+                y1 = interpolate.splev(x1, tck, der=0)
+                new_c.append(list(y1))
+            new_data.append(new_c)
+        new_data= np.asarray(new_data)
+
+        new_data= new_data.mean(axis=0).T
+
+        med_avg= []
+        el= len(self.data['data'])*0.2
+        for c in range(new_data.shape[1]):
+            vals= new_data[:,c,:]
+            vals= np.sort(vals, axis=0)[el:-el,:]
+            med_avg.append(vals.mean(axis=0))
+        med_avg= pd.DataFrame(np.asarray(med_avg).T, columns=flat_list(self.data['to_monitor']))
+
+        def diff(df):
+            x= df.values
+            x= np.row_stack( (x[0,:] , x[1:,:]-x[:-1,:]) )
+            return pd.DataFrame(x, columns=df.columns)
+
+        med_avg= diff(med_avg)
+        self.df= med_avg
+
+        return med_avg
+
     def interpolate(self, feature, npoints=100, filter_signal=True):
         assert(self.df is not None)
 
