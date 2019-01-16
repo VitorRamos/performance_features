@@ -6,16 +6,19 @@ from matplotlib import pyplot as plt
 from scipy.signal import savgol_filter
 from scipy import interpolate
 from scipy.optimize import least_squares
+import scipy.integrate as integrate
 
 flat_list= lambda x: [ g for f in x for g in f ]
 double_list= lambda x: [[g] for g in x]
 split_n= lambda x, n: [x[i:i + n] for i in range(0, len(x), n)]
 
 class Analyser:
-
-    def __init__(self, name):
+    def __init__(self, name, method='moda', npoints= 100):
         self.data= self.load_data(name)
-        self.compute_df()
+        if method == 'moda':
+            self.df, _ = self.moda_df()
+        elif method == 'interpolation':
+            self.df = self.interpolated_df(npoints)
     
     def load_data(self, name):
         """
@@ -25,7 +28,7 @@ class Analyser:
             data= pickle.load(f)
         return data
 
-    def compute_df(self, verbose=False):
+    def moda_df(self, verbose=False):
         """
             Resume multiple runs in one dataframe
             
@@ -74,29 +77,77 @@ class Analyser:
             print("MAX 68% stds error", np.nanmax(q))
             print("MAX 99% stds error", np.nanmax(3*q))
 
-        # compute difference
         def diff(df):
             x= df.values
-            x= np.row_stack( (x[0,:] , x[1:,:]-x[:-1,:]) )
+            x= np.row_stack( (x[0,:] , x[1:,:]-x[:-1,:]) )/self.data['sample_period']
             return pd.DataFrame(x, columns=df.columns)
+
         med_avg= diff(med_avg)
-        self.df= med_avg
 
         return med_avg, std_avg
 
-    def interpolate(self, feature, npoints=100, filter_signal=True):
-        assert(self.df is not None)
+    def interpolated_df(self, npoints= 100):
+        new_data= []
+        for r in self.data['data']:
+            x= np.asarray(r)
+            new_c= []
+            for c in range(x.shape[1]):
+                fserie= np.trim_zeros(x[:,c])
+                if len(fserie) < 4:
+                    if len(fserie) >= 1: fserie= np.hstack((fserie,[fserie[-1]]*(4-len(fserie))))
+                    else: fserie= np.hstack((fserie,[0]*(4-len(fserie))))
+                x0, y0= np.linspace(0,1,len(fserie)), fserie
+                tck = interpolate.splrep(x0, y0, s=0)
+                x1 = np.linspace(0,1,npoints)
+                y1 = interpolate.splev(x1, tck, der=0)
+                new_c.append(list(y1))
+            new_data.append(new_c)
 
+        new_data= np.asarray(new_data)
+        med_avg= []
+        el= int(len(self.data['data'])*0.2)
+        for c in range(new_data.shape[1]):
+            vals= new_data[:,c,:]
+            vals= np.sort(vals, axis=0)[el:-el,:]
+            med_avg.append(vals.mean(axis=0))
+
+        #med_avg= new_data.mean(axis=0)
+        med_avg= pd.DataFrame(np.asarray(med_avg).T, columns=flat_list(self.data['to_monitor']))
+
+        count_shapes= defaultdict(lambda:0)
+        for r in self.data['data']:
+            count_shapes[np.shape(r)]+=1
+        moda_shape= max(count_shapes,key=count_shapes.get)
+
+        def diff(df):
+            x= df.values
+            x= np.row_stack( (x[0,:] , x[1:,:]-x[:-1,:]) )/(self.data['sample_period']*moda_shape[0]/npoints)
+            return pd.DataFrame(x, columns=df.columns)
+
+        med_avg= diff(med_avg)
+        for c in med_avg.columns:
+            med_avg[c]= savgol_filter(med_avg[c].values,15,3)
+
+        return med_avg
+
+    def interpolate(self, feature, npoints=100, filter_signal=True, proportional=False):
         f_series= np.trim_zeros(self.df[feature].values)
-        if f_series.shape[0] < 3:
+        if f_series.shape[0] < 4:
             raise Exception("Cant interpolate")
 
         x0, y0= np.linspace(0,1,len(f_series)), f_series
         tck = interpolate.splrep(x0, y0, s=0)
         x1 = np.linspace(0,1,npoints)
         y1 = interpolate.splev(x1, tck, der=0)
-
-        if filter_signal: y1= savgol_filter(y1,15,3)
+        
+        if filter_signal: y1= savgol_filter(y1,11,3)
+        
+        if proportional:
+            I= integrate.simps(y0)#,dx=self.data['sample_period'])
+            Ia= integrate.simps(y1)#,dx=1.0/npoints)
+            y1*=I/Ia
+            #Ic= integrate.simps(y1,dx=1.0/npoints)
+            #print(I, Ia, Ic)
 
         return x1, y1
 
