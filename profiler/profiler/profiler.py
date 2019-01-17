@@ -143,14 +143,18 @@ class Profiler:
         #TODO solve the race condition
         try:
             self.__destroy_events()
-            self.__kill_program()
+            #self.__kill_program()
             self.program= workload.Workload(workload.stringVec(self.program_args))
             self.program.MAX_SIZE_GROUP= 512
             self.__create_events(self.program.pid)
             for group in self.fd_groups:
                 self.program.add_events(workload.intVec([group[0]]))
         except Exception as e:
-            self.__kill_program()
+            #self.__kill_program()
+            # if "Error on fork" in str(e):
+            #     print(os.getpid())
+            #     exit(0)
+            # print("After")
             raise
         finally:
             pass #something really bad happen
