@@ -126,7 +126,7 @@ class Analyser:
 
         med_avg= diff(med_avg)
         for c in med_avg.columns:
-            med_avg[c]= savgol_filter(med_avg[c].values,15,3)
+            med_avg[c]= savgol_filter(med_avg[c].values,11,3)
 
         return med_avg
 
