@@ -14,6 +14,7 @@ split_n= lambda x, n: [x[i:i + n] for i in range(0, len(x), n)]
 
 class Analyser:
     def __init__(self, name, method='moda', npoints= 100):
+        self.name= name
         self.data= self.load_data(name)
         if method == 'moda':
             self.df, _ = self.moda_df()
@@ -46,28 +47,20 @@ class Analyser:
             print("Moda shape counts {:.2f}%".format(count_shapes[moda_shape]/sum(count_shapes.values())*100))
             print(count_shapes[moda_shape], sum(count_shapes.values()))
 
-        # create a big table where each row is a run
-        big_l= []
-        for r in data_moda:
-            big_l.append(np.array(r).reshape(-1))
-        big_l= np.asarray(big_l)
-        
-        # sort executions and remove outlines and calculate the mean an std
-        med_avg= []
-        std_avg= []
-        for s in range(big_l.shape[1]):
-            el= int(len(big_l[:,s])*0.1)//2
-            median= np.sort(big_l[:,s])
-            if el: median= median[el:-el]
-            med_avg.append(median.mean())
-            std_avg.append(median.std())
-        
-        med_avg= np.asarray(med_avg)
-        std_avg= np.asarray(std_avg)
+        el= int(count_shapes[moda_shape]*0.3)//2
+        data_moda= np.asarray(data_moda)
+        med_avg= np.sort(data_moda,axis=0)
+        std_avg= np.sort(data_moda,axis=0)
+        if el != 0:
+            med_avg= med_avg[el:-el].mean(axis=0)
+            std_avg= std_avg[el:-el].std(axis=0)
+        else:
+            med_avg= med_avg.mean(axis=0)
+            std_avg= std_avg.mean(axis=0)
         
         # create the dataframe
-        med_avg= pd.DataFrame(med_avg.reshape(moda_shape), columns=flat_list(self.data['to_monitor']))
-        std_avg= pd.DataFrame(std_avg.reshape(moda_shape), columns=flat_list(self.data['to_monitor']))
+        med_avg= pd.DataFrame(med_avg, columns=flat_list(self.data['to_monitor']))
+        std_avg= pd.DataFrame(std_avg, columns=flat_list(self.data['to_monitor']))
         
         # quality of the samples (experimental)
         if verbose:
@@ -104,15 +97,29 @@ class Analyser:
             new_data.append(new_c)
 
         new_data= np.asarray(new_data)
-        med_avg= []
-        el= int(len(self.data['data'])*0.2)
-        for c in range(new_data.shape[1]):
-            vals= new_data[:,c,:]
-            vals= np.sort(vals, axis=0)[el:-el,:]
-            med_avg.append(vals.mean(axis=0))
+        # med_avg= []
+        # el= int(len(self.data['data'])*0.2)
+        # for c in range(new_data.shape[1]):
+        #     vals= new_data[:,c,:]
+        #     vals= np.sort(vals, axis=0)[el:-el,:]
+        #     med_avg.append(vals.mean(axis=0))
 
         #med_avg= new_data.mean(axis=0)
-        med_avg= pd.DataFrame(np.asarray(med_avg).T, columns=flat_list(self.data['to_monitor']))
+        # med_avg= pd.DataFrame(np.asarray(med_avg).T, columns=flat_list(self.data['to_monitor']))
+
+        # NEED TO TEST THIS
+        el= int(len(self.data['data'])*0.3)//2
+        med_avg= np.sort(new_data,axis=0)
+        std_avg= np.sort(new_data,axis=0)
+        if el != 0:
+            med_avg= med_avg[el:-el].mean(axis=0)
+            std_avg= std_avg[el:-el].std(axis=0)
+        else:
+            med_avg= med_avg.mean(axis=0)
+            std_avg= std_avg.mean(axis=0)
+        # NEED TO TEST THIS
+
+        med_avg= pd.DataFrame(med_avg, columns=flat_list(self.data['to_monitor']))
 
         count_shapes= defaultdict(lambda:0)
         for r in self.data['data']:
@@ -198,8 +205,8 @@ class Analyser:
         return t_p, np.mean( np.abs(t_p-P2) )
     
     @staticmethod
-    def compare(a1, a2, feature='PERF_COUNT_HW_INSTRUCTIONS'):
-        x0, y0= a1.interpolate(feature=feature, npoints= 100)
-        x1, y1= a2.interpolate(feature=feature, npoints= 100)
+    def compare(a1, a2, feature='PERF_COUNT_HW_INSTRUCTIONS', npoints_=100):
+        x0, y0= a1.interpolate(feature=feature, npoints= npoints_)
+        x1, y1= a2.interpolate(feature=feature, npoints= npoints_)
         yt, err= Analyser.scale_translation_matrix(x0, y0, x1, y1)
         return yt, err
