@@ -202,7 +202,7 @@ class Analyser:
         t_p= np.hstack( [xt,yt] ).reshape((-1,2),order='F')
         P2= np.hstack( [x1,y1] ).reshape((-1,2),order='F')
 
-        return t_p, np.mean( np.abs(t_p-P2) )
+        return t_p, np.sum( np.abs(t_p-P2) )
     
     @staticmethod
     def compare(a1, a2, feature='PERF_COUNT_HW_INSTRUCTIONS', npoints_=100):
