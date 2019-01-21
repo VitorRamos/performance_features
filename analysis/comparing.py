@@ -5,6 +5,7 @@ import pandas as pd
 import numpy as np
 import os, pickle
 from tqdm import tqdm
+import gc
 
 sd= {'EXTRALARGE':5, 'LARGE':4, 'MEDIUM':3, 'SMALL':2, 'MINI':1}
 bpath= '/home/vitor/Documents/performance_features/analysis/hpc_belgica_v3/'
@@ -84,6 +85,7 @@ def features_figures():
     print("Create workflow figures")
     for p_list,p in zip(pdic.values(),pdic.keys()):
         print("Program ", p)
+        print("Garbage Collector cleans ", gc.collect())
         try:
             os.mkdir('figures/{}'.format(p))
         except: pass
