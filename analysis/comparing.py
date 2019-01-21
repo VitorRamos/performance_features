@@ -153,6 +153,42 @@ def features_figures():
         plt.savefig('figures/{}/{}_4.png'.format(p, 'input_size'))
         plt.close()
 
+def compare_all():
+    global pdic
+    table= []
+    pdic= dict(sorted(pdic.items()))
+    plist= flat_list(pdic.values())
+    programs= []
+    print("Computing input size")
+    for p1 in plist:
+        p1.df['input_size']= p1.df['PERF_COUNT_HW_INSTRUCTIONS']/p1.df['MEM_UOPS_RETIRED:ALL_STORES']
+        p1.df= p1.df.dropna()
+    print("Creating table")
+    for p1 in tqdm(plist):
+        programs.append(p1.name.split('/')[-1])
+        table_row= []
+        for p2 in plist:
+            try:
+                #_, err= Analyser.compare(p1,p2,feature='input_size')
+                x0, y0= p1.interpolate(feature='input_size', npoints= 100)
+                x1, y1= p2.interpolate(feature='input_size', npoints= 100)
+                err= np.corrcoef(y0,y1)[0,1]
+                table_row.append(err)
+
+                # yt, err= Analyser.scale_translation_matrix(x0, y0, x1, y1)
+                # plt.plot(x0,y0,label=p1.name.split('/')[-1])
+                # plt.plot(x1,y1,label=p2.name.split('/')[-1])
+                # plt.plot(yt[:,0],yt[:,1],label='yt')
+                # plt.legend()
+                # print(err)
+                # plt.show()
+            except Exception as e:
+                table_row.append(0)
+        table.append(table_row)
+
+    df= pd.DataFrame(table, columns=programs)
+    df.to_csv('comparison_all.csv')
+
 def compare_input_sz(p1, p2):
     a1= Analyser(bpath+p1)
     a1.df['input_size']= a1.df['PERF_COUNT_HW_INSTRUCTIONS']/a1.df['MEM_UOPS_RETIRED:ALL_STORES']
@@ -173,6 +209,7 @@ def compare_input_sz(p1, p2):
     plt.legend()
     plt.show()
 
-features_figures()
+#features_figures()
 #input_sz_figures()
+compare_all()
 #compare_input_sz(pdic['3mm'][2], pdic['2mm'][2])
