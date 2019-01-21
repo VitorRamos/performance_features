@@ -39,13 +39,33 @@ def colorgen():
 def input_sz_figures():
     for p in pdic:
         plt.figure()
+        colors= colorgen()
         for i, a in enumerate(pdic[p]):
             try:
                 a= Analyser(bpath+a)
-                a.df['input_size']= a.df['PERF_COUNT_HW_INSTRUCTIONS']/a.df['MEM_UOPS_RETIRED:ALL_STORES']
-                a.df= a.df.dropna()
-                x0, y0= a.interpolate(feature='input_size', npoints= 100)
-                plt.plot(x0,y0,label=pdic[p][i].split('_')[1])
+                #a.df['input_size']= a.df['PERF_COUNT_HW_INSTRUCTIONS']/a.df['MEM_UOPS_RETIRED:ALL_STORES']
+                #a.df= a.df.dropna()
+
+                # shape
+                #x0, y0= a.interpolate(feature='input_size', npoints= 100)
+
+                # diff diff interpoalated (interpoalated both)
+                #_, x0= a.interpolate(feature='PERF_COUNT_HW_INSTRUCTIONS', npoints= 100)
+                #_, y0= a.interpolate(feature='MEM_UOPS_RETIRED:ALL_STORES', npoints= len(x0))
+
+                # int diff (interpoalated mem)
+                #x0= np.cumsum(a.df['PERF_COUNT_HW_INSTRUCTIONS'])
+                #_, y0= a.interpolate(feature='MEM_UOPS_RETIRED:ALL_STORES', npoints= len(x0))
+
+                # int diff
+                #x0= np.cumsum(a.df['PERF_COUNT_HW_INSTRUCTIONS'])
+                #y0= a.df['MEM_UOPS_RETIRED:ALL_STORES']
+
+                # int int
+                x0= np.cumsum(a.df['PERF_COUNT_HW_INSTRUCTIONS'])
+                y0= np.cumsum(a.df['MEM_UOPS_RETIRED:ALL_STORES'])
+
+                plt.plot(x0,y0,label=pdic[p][i].split('_')[1], c=next(colors))
             except Exception as e:
                 print(e)
         plt.legend()
@@ -149,4 +169,4 @@ def compare_input_sz():
     plt.show()
 
 #features_figures()
-#input_sz_figures()
+input_sz_figures()
