@@ -116,7 +116,7 @@ vector<vector<signed long int>> Workload::run(double sample_perid, bool reset)
     ssize_t bytes_read;
     unsigned int i;
     int status;
-    int hangs= sample_perid>0?WNOHANG:0;
+    int hangs= sample_perid>=0?WNOHANG:0;
     samples.reserve(1000);
 
     if(!this->isAlive)
