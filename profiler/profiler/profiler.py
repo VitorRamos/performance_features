@@ -287,6 +287,8 @@ class Profiler:
         if not self.program_args: 
             raise Exception("Need a program ars tor run")
         self.__initialize()
+        self.reset_events()
+        self.enable_events()
         self.program.start()
 
         

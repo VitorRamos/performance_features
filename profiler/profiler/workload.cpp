@@ -38,7 +38,7 @@ Workload::Workload(vector<string> args)
     sa.sa_flags = SA_SIGINFO; /* Important. */
     sigaction(SIGUSR1, &sa, NULL);
 }
-
+#include <iostream>
 int Workload::create_wrokload(const vector<string>& args)
 {
     char **argv= convert(args);
@@ -53,9 +53,13 @@ int Workload::create_wrokload(const vector<string>& args)
         fd = open("out.stderr", O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR);
         dup2(fd, STDERR_FILENO);
         if(ptrace(PTRACE_TRACEME, 0, 0, 0) <0)
-            throw "Cant traceme";
+        {
+            std::cerr << "Cant traceme" << std::endl;
+            exit(-1);
+        }
         if (execv(argv[0], argv) < 0)
         {
+            std::cerr << "Cant creat process" << std::endl;
             //dup2(oldfd, STDOUT_FILENO);
             //ptrace(PTRACE_DETACH, 0, 0, 0);
             //throw "Error on fork";

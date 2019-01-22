@@ -7,6 +7,9 @@
 #include <sys/ptrace.h>
 #include <signal.h>
 
+#include <iostream>
+using namespace std;
+
 class Workload
 {
     //int pipe_fd[2];
