@@ -287,6 +287,8 @@ class Profiler:
         if not self.program_args: 
             raise Exception("Need a program ars tor run")
         self.__initialize()
+        self.reset_events()
+        self.enable_events()
         self.program.start()
 
         
@@ -306,7 +308,7 @@ class Profiler:
         aux= [list(v) for v in data]
         return self.__format_data(aux)
 
-def run_program(self, pargs, to_monitor, n=30, sample_period=0.05, reset_on_sample= False):
+def run_program(pargs, to_monitor, n=30, sample_period=0.05, reset_on_sample= False):
     """
         Run the program multiple times
     """
@@ -324,10 +326,10 @@ def run_program(self, pargs, to_monitor, n=30, sample_period=0.05, reset_on_samp
     
     return data
 
-def save_data(self, data, name):
-        """
-            save data to file
-        """
-        import pickle
-        with open('{}.dat'.format(name),'wb+') as f:
-            pickle.dump(data, f)
+def save_data(data, name):
+    """
+        save data to file
+    """
+    import pickle
+    with open('{}.dat'.format(name),'wb+') as f:
+        pickle.dump(data, f)
