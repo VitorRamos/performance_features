@@ -207,6 +207,7 @@ def compare_input_sz(p1, p2):
     plt.plot(x1,y1,label='y1')
     plt.plot(yt[:,0],yt[:,1],label='yt')
     plt.legend()
+    plt.title('PERF_COUNT_HW_INSTRUCTIONS')
     plt.show()
 
 #features_figures()
