@@ -1,8 +1,9 @@
 import unittest
 from profiler import Profiler
 
+class TestCompareMethods(unittest.TestCase):
+    pass
 class TestProfilerMethods(unittest.TestCase):
-
     def test_run(self):
         for sp in [-0.1, 0, 0.1]:
             for res in [True, False]:
@@ -46,6 +47,7 @@ class TestProfilerMethods(unittest.TestCase):
     def test_runbackground(self):
         # BUG when run run_background too fast and chield dosent exit
         # waitpid never recived initial signal to start ptrace
+        # some other race conditions can happen to
         for sp in [-0.1, 0, 0.1]:
             for res in [True, False]:
                 program= Profiler(program_args=['./hello'], events_groups=[['PERF_COUNT_HW_INSTRUCTIONS']])
@@ -69,11 +71,11 @@ class TestProfilerMethods(unittest.TestCase):
                     program.run_background()
                     while program.program.isAlive: pass
     
-
     # def test_upper(self):
     #     self.assertEqual('foo'.upper(), 'FOO')
     #     self.assertTrue('FOO'.isupper())
     #     self.assertFalse('Foo'.isupper())
 
+import os, time
 if __name__ == '__main__':
     unittest.main()
