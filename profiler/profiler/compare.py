@@ -1,12 +1,13 @@
+import pickle
 from collections import defaultdict
+
 import pandas as pd
 import numpy as np
-import pickle
-from matplotlib import pyplot as plt
+
 from scipy.signal import savgol_filter
 from scipy import interpolate
 from scipy.optimize import least_squares
-import scipy.integrate as integrate
+from scipy import integrate
 
 flat_list= lambda x: [ g for f in x for g in f ]
 double_list= lambda x: [[g] for g in x]
