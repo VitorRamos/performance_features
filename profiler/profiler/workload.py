@@ -173,6 +173,10 @@ class Workload(_object):
     __swig_getmethods__["pid"] = _workload.Workload_pid_get
     if _newclass:
         pid = _swig_property(_workload.Workload_pid_get, _workload.Workload_pid_set)
+    __swig_setmethods__["ppid"] = _workload.Workload_ppid_set
+    __swig_getmethods__["ppid"] = _workload.Workload_ppid_get
+    if _newclass:
+        ppid = _swig_property(_workload.Workload_ppid_get, _workload.Workload_ppid_set)
     __swig_setmethods__["isAlive"] = _workload.Workload_isAlive_set
     __swig_getmethods__["isAlive"] = _workload.Workload_isAlive_get
     if _newclass:
@@ -193,10 +197,18 @@ class Workload(_object):
 
     def run(self, sample_perid, reset):
         return _workload.Workload_run(self, sample_perid, reset)
+    if _newclass:
+        handler = staticmethod(_workload.Workload_handler)
+    else:
+        handler = _workload.Workload_handler
     __swig_destroy__ = _workload.delete_Workload
     __del__ = lambda self: None
 Workload_swigregister = _workload.Workload_swigregister
 Workload_swigregister(Workload)
+
+def Workload_handler(sig, si, ucontext):
+    return _workload.Workload_handler(sig, si, ucontext)
+Workload_handler = _workload.Workload_handler
 
 class stringVec(_object):
     __swig_setmethods__ = {}

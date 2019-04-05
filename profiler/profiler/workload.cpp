@@ -10,6 +10,7 @@
 
 #include <linux/perf_event.h>
 
+#include <iostream>
 #include <sys/mman.h>
 #include <sys/sysinfo.h>
 #include <sys/fcntl.h>
@@ -30,6 +31,13 @@ Workload::Workload(vector<string> args)
 {
     this->pid= create_wrokload(args);
     this->isAlive= 1;
+    ppid= getpid();
+
+    struct sigaction sa;
+    sigemptyset(&sa.sa_mask);
+    sa.sa_sigaction = Workload::handler;
+    sa.sa_flags = SA_SIGINFO; /* Important. */
+    sigaction(SIGUSR1, &sa, NULL);
 }
 
 int Workload::create_wrokload(const vector<string>& args)
@@ -40,26 +48,47 @@ int Workload::create_wrokload(const vector<string>& args)
         throw "Error on fork";
     if (pid == 0)
     {
-        // int fd = open("out.stdout", O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR);
-        // dup2(fd, STDOUT_FILENO);
-        // fd = open("out.stderr", O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR);
-        // dup2(fd, STDERR_FILENO);
-        ptrace(PTRACE_TRACEME, 0, 0, 0);
+        int fd = open("out.stdout", O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR);
+        //int oldfd= dup(STDOUT_FILENO);
+        dup2(fd, STDOUT_FILENO);
+        fd = open("out.stderr", O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR);
+        dup2(fd, STDERR_FILENO);
+        if(ptrace(PTRACE_TRACEME, 0, 0, 0) <0)
+        {
+            std::cerr << "Cant traceme" << std::endl;
+            exit(-1);
+        }
         if (execv(argv[0], argv) < 0)
-            throw "Error executing program";
+        {
+            std::cerr << "Cant creat process" << std::endl;
+            //dup2(oldfd, STDOUT_FILENO);
+            //ptrace(PTRACE_DETACH, 0, 0, 0);
+            //throw "Error on fork";
+            //this->isAlive= 0; // need to comunitate
+            exit(-1);
+        }
     }
-    delete []argv;
-    return pid;
+    else
+    {
+        delete []argv;
+        return pid;
+    }
 }
 
 void Workload::wait_finish()
 {
     int status;
-    while(1)
+    while(waitpid(pid, &status, 0) >= 0)
     {
-        waitpid(pid, &status, 0);
-        if (WIFEXITED(status))
+        if (WIFEXITED(status) || WIFSIGNALED(status))
             break;
+        
+        if(WIFSTOPPED(status) && WSTOPSIG(status) == SIGTRAP)
+        {
+            union sigval sv;
+            sv.sival_int = pid;
+            sigqueue(ppid, SIGUSR1, sv);
+        }
     }
     isAlive= 0;
 }
@@ -70,7 +99,12 @@ void Workload::start()
     {
         int status;
         waitpid(pid, &status, 0);
-        ptrace(PTRACE_CONT, pid, 0, 0);
+        if(ptrace(PTRACE_CONT, pid, 0, 0) < 0)
+            throw "Cant continue program";
+        // waitpid(pid, &status, 0);
+        // cout << "Ptrace 2 " << ptrace(PTRACE_CONT, pid, 0, 0) << endl; 
+        // waitpid(pid, &status, 0);
+        // cout << "Ptrace 3 " << ptrace(PTRACE_CONT, pid, 0, 0) << endl; 
         waiter = new thread(&Workload::wait_finish, this);
     }
 }
@@ -87,9 +121,11 @@ vector<vector<signed long int>> Workload::run(double sample_perid, bool reset)
     ssize_t bytes_read;
     unsigned int i;
     int status;
-
+    int hangs= sample_perid>=0?WNOHANG:0;
     samples.reserve(1000);
 
+    if(!this->isAlive)
+        throw "Attempt to execute a dead program";
 
     waitpid(pid, &status, 0);
     for(i=0; i<fds.size(); i++)
@@ -97,12 +133,18 @@ vector<vector<signed long int>> Workload::run(double sample_perid, bool reset)
         ioctl(fds[i], PERF_EVENT_IOC_RESET, PERF_IOC_FLAG_GROUP);
         ioctl(fds[i], PERF_EVENT_IOC_ENABLE, PERF_IOC_FLAG_GROUP);
     }
-    ptrace(PTRACE_CONT, pid, 0, 0);
+    if(ptrace(PTRACE_CONT, pid, 0, 0) < 0)
+        throw "Cant continue program";
     while(1)
     {
-        waitpid(pid, &status, WNOHANG);
-        if (WIFEXITED(status))
+        waitpid(pid, &status, hangs);
+        if (WIFEXITED(status) || WIFSIGNALED(status))
             break;
+        // if(WIFSTOPPED(status) && WSTOPSIG(status) == SIGTRAP)
+        // {
+            
+        //     continue;
+        // }
         
         if(sample_perid) usleep(sample_perid);
         

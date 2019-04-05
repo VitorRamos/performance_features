@@ -12,6 +12,10 @@ try:
     hardware_events= [e for e in evs if 'PERF_COUNT_HW' in e]
     hw_groups= split_n(hardware_events, 10)
     evs_monitor= hw_groups[0:1]+[software_events]
+<<<<<<< HEAD
+=======
+    evs_monitor= [['PERF_COUNT_HW_INSTRUCTIONS']]
+>>>>>>> ebb6e8c2d115f0d9359bf193bff504f4a578fc63
     
     program= Profiler(program_args=['./hello'], events_groups=evs_monitor)
     data= program.run(sample_period=0.01,reset_on_sample=False)

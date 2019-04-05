@@ -64,7 +64,7 @@ class Profiler:
                 try:
                     err, encoding = perfmon.pfm_get_perf_event_encoding(e, perfmon.PFM_PLM0 | perfmon.PFM_PLM3, None, None)
                 except:
-                    print(e)
+                    #print("Error encoding : "+e)
                     raise
                 ev_list.append(encoding)
             self.event_groups.append(ev_list)
@@ -80,21 +80,21 @@ class Profiler:
                 e.exclude_kernel = 1
                 e.exclude_hv = 1
                 e.inherit= 1
-                e.disable= 1
+                e.disabled= 1
                 e.read_format= perfmon.PERF_FORMAT_GROUP  | perfmon.PERF_FORMAT_TOTAL_TIME_ENABLED
                 fd= perfmon.perf_event_open(e, pid, -1, -1, 0)
                 if fd < 1:
-                    raise Exception("Error creating fd"+group_name[0])
+                    raise Exception("Error creating fd "+group_name[0])
                 fd_list.append(fd)
                 for e, e_name in zip(group[1:],group_name[1:]):
                     e.exclude_kernel = 1
                     e.exclude_hv = 1
                     e.inherit= 1
-                    e.disable= 1
+                    e.disabled= 1
                     e.read_format= perfmon.PERF_FORMAT_GROUP  | perfmon.PERF_FORMAT_TOTAL_TIME_ENABLED
                     fd= perfmon.perf_event_open(e, pid, -1, fd_list[0], 0)
                     if fd < 1: 
-                        raise Exception("Error creating fd"+e_name)
+                        raise Exception("Error creating fd "+e_name)
                     fd_list.append(fd)
             else:
                 for e, e_name in zip(group,group_name):
@@ -104,11 +104,11 @@ class Profiler:
                         e.exclude_kernel = 1
                         e.exclude_hv = 1
                         e.inherit= 1
-                        e.disable= 1
+                        e.disabled= 1
                         fd= perfmon.perf_event_open(e, pid, -1, -1, 0)
 
                     if fd < 0: 
-                        raise Exception("Erro creating fd"+e_name)
+                        raise Exception("Erro creating fd "+e_name)
                     fd_list.append(fd)
             self.fd_groups.append(fd_list)
     
@@ -129,6 +129,12 @@ class Profiler:
             print("Killing process", self.program.pid)
             self.program.start()
             os.kill(self.program.pid, signal.SIGKILL)
+            t_max= 0
+            while self.program.isAlive and t_max < 50:
+                time.sleep(0.1)
+                t_max+=1
+            if t_max >= 50:
+                raise Exception("Cant kill the program")
 
     def __initialize(self):
         """
@@ -137,16 +143,22 @@ class Profiler:
         #TODO solve the race condition
         try:
             self.__destroy_events()
-            self.__kill_program()
+            #self.__kill_program()
             self.program= workload.Workload(workload.stringVec(self.program_args))
             self.program.MAX_SIZE_GROUP= 512
             self.__create_events(self.program.pid)
             for group in self.fd_groups:
                 self.program.add_events(workload.intVec([group[0]]))
-        except Exception as e :
-            print("Error on initialization", e)
-            exit(0)
+        except Exception as e:
+            #self.__kill_program()
+            # if "Error on fork" in str(e):
+            #     print(os.getpid())
+            #     exit(0)
+            # print("After")
             raise
+        finally:
+            pass #something really bad happen
+        
 
     def __format_data(self, data):
         """
@@ -241,6 +253,19 @@ class Profiler:
         """
         if not self.program_args: 
             raise Exception("Need a program ars tor run")
+
+        if sample_period < 0:
+            self.__initialize()
+            self.reset_events()
+            self.enable_events()
+            self.program.start()
+            data= []
+            while self.program.isAlive:
+                time.sleep(0.05)
+            data.append(self.read_events())
+            
+            return self.__format_data(data)
+
         self.__initialize()
         self.reset_events()
         self.enable_events()
@@ -250,6 +275,7 @@ class Profiler:
             time.sleep(sample_period)
             data.append(self.read_events())
             if reset_on_sample: self.reset_events()
+
         data.append(self.read_events())
 
         return self.__format_data(data)
@@ -261,6 +287,8 @@ class Profiler:
         if not self.program_args: 
             raise Exception("Need a program ars tor run")
         self.__initialize()
+        self.reset_events()
+        self.enable_events()
         self.program.start()
 
         
@@ -279,4 +307,29 @@ class Profiler:
         data= self.program.run(sample_perid=sample_period*1e6, reset=reset_on_sample)
         aux= [list(v) for v in data]
         return self.__format_data(aux)
+
+def run_program(pargs, to_monitor, n=30, sample_period=0.05, reset_on_sample= False):
+    """
+        Run the program multiple times
+    """
+    try:
+        all_data= []
+        for i in range(n):
+            program= Profiler(program_args=pargs, events_groups=to_monitor)
+            data= program.run(sample_period=sample_period,reset_on_sample=reset_on_sample)
+            all_data.append(data)
+    except RuntimeError as e:
+        print(e.args[0])
+    finally:
+        print("Well...")
+    data= {'n':n, 'sample_period':sample_period,'reset_on_sample':reset_on_sample, 'data':all_data, 'to_monitor':to_monitor}
     
+    return data
+
+def save_data(data, name):
+    """
+        save data to file
+    """
+    import pickle
+    with open('{}.dat'.format(name),'wb+') as f:
+        pickle.dump(data, f)

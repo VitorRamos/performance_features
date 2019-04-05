@@ -6,7 +6,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name='performance_features',
-    version='0.0.2',
+    version='0.1.2',
     packages=['perfmon', 'profiler'],
     package_dir={ 'perfmon' : 'perfmon', 'profiler': 'profiler' },
     py_modules=['perfmon.perfmon_int', 'profiler.profiler'],
@@ -18,6 +18,7 @@ setuptools.setup(
                 Extension('profiler._workload',
                   sources = ['profiler/workload.i', 'profiler/workload.cpp'],
                   libraries = ['pfm'],
+                  extra_compile_args= ['-fopenmp'],
                   swig_opts=['-c++'])],
     author="Vitor Ramos",
     author_email="ramos.vitor89@gmail.com",
