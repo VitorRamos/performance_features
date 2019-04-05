@@ -15,7 +15,10 @@ split_n= lambda x, n: [x[i:i + n] for i in range(0, len(x), n)]
 class Analyser:
     def __init__(self, name, method='moda', npoints= 100):
         self.name= name
-        self.data= self.load_data(name)
+        if type(name) == str:
+            self.data= self.load_data(name)
+        else:
+            self.data= name
         if method == 'moda':
             self.df, _ = self.moda_df()
         elif method == 'interpolation':
