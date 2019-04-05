@@ -6,6 +6,6 @@ sysctl -w kernel.perf_event_paranoid=-1
 sysctl -w kernel.nmi_watchdog=0
 
 # change frequency permition
-sudo chmod -R 777 /sys/devices/system/cpu/cpu*/cpufreq/
-sudo chmod -R 777 /sys/devices/system/cpu/cpu*/online
-sudo modprobe msr
+# sudo chmod -R 777 /sys/devices/system/cpu/cpu*/cpufreq/
+# sudo chmod -R 777 /sys/devices/system/cpu/cpu*/online
+# sudo modprobe msr

@@ -1,0 +1,11 @@
+sudo: true
+language: python
+python:
+  - 3.6
+
+install:
+  - ./install.sh
+
+script:
+  - ./kernel_parameters.sh
+  - ./run_test.sh
