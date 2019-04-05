@@ -18,7 +18,7 @@ setuptools.setup(
                 Extension('profiler._workload',
                   sources = ['profiler/workload.i', 'profiler/workload.cpp'],
                   libraries = ['pfm'],
-                  extra_compile_args= ['-fopenmp'],
+                  extra_compile_args= ['-fopenmp','-std=c++11'],
                   swig_opts=['-c++'])],
     author="Vitor Ramos",
     author_email="ramos.vitor89@gmail.com",

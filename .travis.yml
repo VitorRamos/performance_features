@@ -6,8 +6,8 @@ python:
 
 addons:
   packages:
-    - g++-7
-    - gcc-7
+    - g++
+    - gcc
     - swig
     - python3-dev
     - libpfm4-dev
