@@ -320,8 +320,6 @@ def run_program(pargs, to_monitor, n=30, sample_period=0.05, reset_on_sample= Fa
             all_data.append(data)
     except RuntimeError as e:
         print(e.args[0])
-    finally:
-        print("Well...")
     data= {'n':n, 'sample_period':sample_period,'reset_on_sample':reset_on_sample, 'data':all_data, 'to_monitor':to_monitor}
     
     return data
