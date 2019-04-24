@@ -42,18 +42,18 @@ Workload::Workload(vector<string> args)
 
 int Workload::create_wrokload(const vector<string>& args)
 {
-    char **argv= convert(args);
     int pid = fork();
     if(pid < 0)
         throw "Error on fork";
     if (pid == 0)
     {
+        char **argv= convert(args);
         int fd = open("out.stdout", O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR);
         //int oldfd= dup(STDOUT_FILENO);
         dup2(fd, STDOUT_FILENO);
         fd = open("out.stderr", O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR);
         dup2(fd, STDERR_FILENO);
-        if(ptrace(PTRACE_TRACEME, 0, 0, 0) <0)
+        if(ptrace(PTRACE_TRACEME, 0, 0, 0) < 0)
         {
             std::cerr << "Cant traceme" << std::endl;
             exit(-1);
@@ -70,7 +70,6 @@ int Workload::create_wrokload(const vector<string>& args)
     }
     else
     {
-        delete []argv;
         return pid;
     }
 }
@@ -140,11 +139,13 @@ vector<vector<signed long int>> Workload::run(double sample_perid, bool reset)
         waitpid(pid, &status, hangs);
         if (WIFEXITED(status) || WIFSIGNALED(status))
             break;
-        // if(WIFSTOPPED(status) && WSTOPSIG(status) == SIGTRAP)
-        // {
-            
-        //     continue;
-        // }
+        if(WIFSTOPPED(status) && WSTOPSIG(status) == SIGCHLD)
+        {
+            if(WSTOPSIG(status) == SIGABRT)
+                break;
+            ptrace(PTRACE_CONT, pid, 0, 0);
+            continue;
+        }
         
         if(sample_perid) usleep(sample_perid);
         
