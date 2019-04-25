@@ -139,11 +139,12 @@ vector<vector<signed long int>> Workload::run(double sample_perid, bool reset)
         waitpid(pid, &status, hangs);
         if (WIFEXITED(status) || WIFSIGNALED(status))
             break;
-        if(WIFSTOPPED(status) && WSTOPSIG(status) == SIGCHLD)
+        if(WIFSTOPPED(status))
         {
             if(WSTOPSIG(status) == SIGABRT)
                 break;
-            ptrace(PTRACE_CONT, pid, 0, 0);
+            if(WSTOPSIG(status) == SIGCHLD)
+                ptrace(PTRACE_CONT, pid, 0, 0);
             continue;
         }
         
