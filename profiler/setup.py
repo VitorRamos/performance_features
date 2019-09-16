@@ -6,7 +6,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name='performance_features',
-    version='0.1.2',
+    version='0.2.1',
     packages=['perfmon', 'profiler'],
     package_dir={ 'perfmon' : 'perfmon', 'profiler': 'profiler' },
     py_modules=['perfmon.perfmon_int', 'profiler.profiler'],
@@ -20,6 +20,7 @@ setuptools.setup(
                   libraries = ['pfm'],
                   extra_compile_args= ['-fopenmp','-std=c++11'],
                   swig_opts=['-c++'])],
+    install_requires=["pandas","scipy"],
     author="Vitor Ramos",
     author_email="ramos.vitor89@gmail.com",
     description="perf event wrapper for python",
