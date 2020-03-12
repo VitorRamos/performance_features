@@ -206,21 +206,24 @@ class Profiler:
             Enable the events
         """
         for fd in self.fd_groups:
-            fcntl.ioctl(fd[0], Profiler.PERF_EVENT_IOC_ENABLE, 0)
+            for fdx in fd:
+                fcntl.ioctl(fdx, Profiler.PERF_EVENT_IOC_ENABLE, 0)
 
     def disable_events(self):
         """
             Disable the events
         """
         for fd in self.fd_groups:
-            fcntl.ioctl(fd[0], Profiler.PERF_EVENT_IOC_DISABLE, 0)
+            for fdx in fd:
+                fcntl.ioctl(fdx, Profiler.PERF_EVENT_IOC_DISABLE, 0)
 
     def reset_events(self):
         """
             Reset the events
         """
         for fd in self.fd_groups:
-            fcntl.ioctl(fd[0], Profiler.PERF_EVENT_IOC_RESET, 0)
+            for fdx in fd:
+                fcntl.ioctl(fdx, Profiler.PERF_EVENT_IOC_RESET, 0)
 
     def read_events(self):
         """
@@ -262,7 +265,7 @@ class Profiler:
             data= []
             while self.program.isAlive:
                 time.sleep(0.05)
-            data.append(self.read_events())
+                data.append(self.read_events())
             
             return self.__format_data(data)
 
