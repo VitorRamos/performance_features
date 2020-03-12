@@ -145,7 +145,7 @@ vector<vector<signed long int>> Workload::run(double sample_perid, bool reset)
                 break;
             if(WSTOPSIG(status) == SIGCHLD)
                 ptrace(PTRACE_CONT, pid, 0, 0);
-            continue;
+            // continue;
         }
         
         if(sample_perid) usleep(sample_perid);
