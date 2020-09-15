@@ -36,8 +36,8 @@ The file descriptors are passed to the workload module develop on c++ which star
 
 ## Installation
 ```bash
-sudo apt install python-dev swig libpfm4-dev
-pip install performance-features
+git clone https://github.com/VitorRamos/performance_features.git
+cd performance_features && sudo ./install.sh
 ```
 
 <a name="usage"/>
