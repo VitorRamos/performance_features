@@ -3,12 +3,12 @@ name: Continuous Integration
 on:
   push:
     branches:
-      - master
-      - devellopment
+      - main
+      - development
   pull_request:
     branches:
-      - master
-      - devellopment
+      - main
+      - development
 
 jobs:
   build:
