@@ -1,0 +1,28 @@
+on:
+  push:
+    branches:
+    - main
+  pull_request:
+    branches:
+    - main
+    
+jobs:
+  build:
+    name: Build on ${{ matrix.python-version }} and ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        python-version: [3.6, 3.10]
+        os: [ubuntu-18.04, ubuntu-20.04, ubuntu-latest]
+
+    steps:
+    - uses: actions/checkout@v1
+    - name: Use python ${{ matrix.python-version }}
+      uses: actions/setup-python@v1
+      with:
+        python-version: ${{ matrix.python-version }}
+        packages : g++ gcc swig libpfm4-dev python3-dev
+        
+    - name: build
+      run: |
+        python3 profiler/setup.py
