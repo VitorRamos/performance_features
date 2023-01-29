@@ -1,6 +1,5 @@
 # Performance Counters api for python
 
-[![Build Status](https://travis-ci.com/VitorRamos/performance_features.svg?branch=master)](https://travis-ci.com/VitorRamos/performance_features)
 
 
 ## Table of contents
