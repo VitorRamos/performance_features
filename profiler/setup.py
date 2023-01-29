@@ -1,12 +1,19 @@
 import setuptools
 from distutils.core import  Extension
+from distutils.command.build_ext import build_ext
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
+class cbuild_ext(build_ext):
+    def run(self):
+        super().run()
+        self.copy_file("perfmon/perfmon_int.py", f"{self.build_lib}/perfmon"),
+
 setuptools.setup(
+    cmdclass={"build_ext": cbuild_ext},
     name='performance_features',
-    version='0.2.3',
+    version='0.2.5',
     packages=['perfmon', 'profiler'],
     package_dir={ 'perfmon' : 'perfmon', 'profiler': 'profiler' },
     py_modules=['perfmon.perfmon_int', 'profiler.profiler'],
