@@ -20,12 +20,17 @@ jobs:
         os: [ubuntu-18.04, ubuntu-20.04, ubuntu-latest]
 
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v2
     - name: Use python ${{ matrix.python-version }}
-      uses: actions/setup-python@v1
+      uses: actions/setup-python@v2
       with:
         python-version: ${{ matrix.python-version }}
 
     - name: build
       run: |
         ./install.sh
+
+#    - name: tests
+#      run: |
+#       ./run_tests.sh
+
