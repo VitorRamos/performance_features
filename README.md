@@ -1,6 +1,6 @@
 # Performance Counters api for python
 
-
+[![Continuous Integration](https://github.com/VitorRamos/performance_features/actions/workflows/main.yml/badge.svg)](https://github.com/VitorRamos/performance_features/actions/workflows/main.yml)
 
 ## Table of contents
 
