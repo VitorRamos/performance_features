@@ -29,4 +29,4 @@ jobs:
         
     - name: build
       run: |
-        python3 profiler/setup.py
+        python3 profiler/setup.py install
