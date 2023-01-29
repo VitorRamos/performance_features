@@ -46,41 +46,39 @@ class Analyser:
             count_shapes[np.shape(r)]+=1
         moda_shape= max(count_shapes,key=count_shapes.get)
         data_moda= [d for d in self.data['data'] if np.shape(d) == moda_shape]
-        
+    
         if verbose:
-            print("Moda shape counts {:.2f}%".format(count_shapes[moda_shape]/sum(count_shapes.values())*100))
+            print("Moda shape counts {:.2f}%".format(count_shapes[moda_shape]/len(count_shapes.values())*100))
             print(count_shapes[moda_shape], sum(count_shapes.values()))
-
+    
         el= int(count_shapes[moda_shape]*0.3)//2
         data_moda= np.asarray(data_moda)
         med_avg= np.sort(data_moda,axis=0)
-        std_avg= np.sort(data_moda,axis=0)
-        if el != 0:
-            med_avg= med_avg[el:-el].mean(axis=0)
-            std_avg= std_avg[el:-el].std(axis=0)
-        else:
-            med_avg= med_avg.mean(axis=0)
-            std_avg= std_avg.mean(axis=0)
         
+        if el != 0:
+            med_avg= med_avg[el:-el]
+        
+        def diff(x):
+            x= np.concatenate( (x[:,0:1,:] , x[:,1:,:]-x[:,:-1,:]), axis=1 )/self.data['sample_period']
+            return x
+        
+        med_avg= diff(med_avg)
+        std_avg= med_avg.std(axis=0)
+        med_avg= med_avg.mean(axis=0)
+    
         # create the dataframe
         med_avg= pd.DataFrame(med_avg, columns=flat_list(self.data['to_monitor']))
         std_avg= pd.DataFrame(std_avg, columns=flat_list(self.data['to_monitor']))
-        
+    
         # quality of the samples (experimental)
         if verbose:
             q= std_avg.values/med_avg.values
-            print("AVG 68% samples error", np.nanmean(q))
-            print("AVG 99% stds error", np.nanmean(3*q))
-            print("MAX 68% stds error", np.nanmax(q))
-            print("MAX 99% stds error", np.nanmax(3*q))
-
-        def diff(df):
-            x= df.values
-            x= np.row_stack( (x[0,:] , x[1:,:]-x[:-1,:]) )/self.data['sample_period']
-            return pd.DataFrame(x, columns=df.columns)
-
-        med_avg= diff(med_avg)
-
+            print("AVG 68% samples error", np.nanmean(q)*100)
+            print("AVG 99% samples error", np.nanmean(3*q)*100)
+            
+            print("MAX 68% samples error", np.nanmax(q)*100)
+            print("MAX 99% samples error", np.nanmax(3*q)*100)
+    
         return med_avg, std_avg
 
     def interpolated_df(self, npoints= 100):

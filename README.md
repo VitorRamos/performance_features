@@ -34,7 +34,7 @@ The file descriptors are passed to the workload module develop on c++ which star
 
 <a name="install"/>
 
-## Installation
+## Installation (Only Ubuntu 18.04)
 ```bash
 git clone https://github.com/VitorRamos/performance_features.git
 cd performance_features && sudo ./install.sh
