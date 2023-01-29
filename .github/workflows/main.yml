@@ -1,9 +1,15 @@
+name: Continuous Integration
+
 on:
   push:
-    branches: [ master devellopment ]
+    branches:
+      - master
+      - devellopment
   pull_request:
-    branches: [ master devellopment ]
-    
+    branches:
+      - master
+      - devellopment
+
 jobs:
   build:
     name: Build on ${{ matrix.python-version }} and ${{ matrix.os }}
