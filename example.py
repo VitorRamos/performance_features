@@ -1,6 +1,5 @@
-from profiler import Profiler, get_supported_events
+from performance_features import Profiler
 import pandas as pd
-import numpy as np
 
 try:
     evs_monitor = [["PERF_COUNT_HW_INSTRUCTIONS"], ["SYSTEMWIDE:RAPL_ENERGY_PKG"]]

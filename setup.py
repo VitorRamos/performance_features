@@ -16,9 +16,9 @@ setuptools.setup(
     cmdclass={"build_ext": cbuild_ext},
     name="performance_features",
     version="0.2.5",
-    packages=["perfmon", "profiler"],
-    package_dir={"perfmon": "perfmon", "profiler": "profiler"},
-    py_modules=["perfmon.perfmon_int", "profiler.profiler"],
+    packages=["perfmon", "performance_features"],
+    package_dir={"perfmon": "perfmon", "performance_features": "performance_features"},
+    py_modules=["perfmon.perfmon_int", "performance_features.profiler"],
     ext_modules=[
         Extension(
             "perfmon._perfmon_int",
@@ -28,14 +28,17 @@ setuptools.setup(
             swig_opts=["-I/usr/include/"],
         ),
         Extension(
-            "profiler._workload",
-            sources=["profiler/workload.i", "profiler/workload.cpp"],
+            "performance_features._workload",
+            sources=[
+                "performance_features/workload.i",
+                "performance_features/workload.cpp",
+            ],
             libraries=["pfm"],
             extra_compile_args=["-fopenmp", "-std=c++11"],
             swig_opts=["-c++"],
         ),
     ],
-    install_requires=["pandas==0.24.2", "scipy==1.2.1"],
+    install_requires=["pandas", "scipy"],
     author="Vitor Ramos",
     author_email="ramos.vitor89@gmail.com",
     description="perf event wrapper for python",

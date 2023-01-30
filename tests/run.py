@@ -1,5 +1,5 @@
 import unittest
-from profiler import Profiler
+from performance_features import Profiler
 import os, time
 
 

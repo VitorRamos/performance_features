@@ -1,4 +1,0 @@
-recursive-include  perfmon/include/ *
-include  profiler/workload.cpp
-include  profiler/workload.h
-include  ../README.md
