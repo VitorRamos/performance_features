@@ -32,7 +32,7 @@ sudo ./install.sh
 
 ### List events
 ```python
-from profiler import *
+from performance_features import *
 
 print(get_supported_pmus())
 print(get_supported_events())
@@ -40,7 +40,7 @@ print(get_supported_events())
 
 ### Sampling events
 ```python
-from profiler import *
+from performance_features import *
 
 try:
     events= [['PERF_COUNT_HW_INSTRUCTIONS'],

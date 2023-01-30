@@ -72,6 +72,7 @@ int Workload::create_wrokload(const vector<string>& args)
     {
         return pid;
     }
+    return 0;
 }
 
 void Workload::wait_finish()
@@ -81,7 +82,7 @@ void Workload::wait_finish()
     {
         if (WIFEXITED(status) || WIFSIGNALED(status))
             break;
-        
+
         if(WIFSTOPPED(status) && WSTOPSIG(status) == SIGTRAP)
         {
             union sigval sv;
@@ -101,9 +102,9 @@ void Workload::start()
         if(ptrace(PTRACE_CONT, pid, 0, 0) < 0)
             throw "Cant continue program";
         // waitpid(pid, &status, 0);
-        // cout << "Ptrace 2 " << ptrace(PTRACE_CONT, pid, 0, 0) << endl; 
+        // cout << "Ptrace 2 " << ptrace(PTRACE_CONT, pid, 0, 0) << endl;
         // waitpid(pid, &status, 0);
-        // cout << "Ptrace 3 " << ptrace(PTRACE_CONT, pid, 0, 0) << endl; 
+        // cout << "Ptrace 3 " << ptrace(PTRACE_CONT, pid, 0, 0) << endl;
         waiter = new thread(&Workload::wait_finish, this);
     }
 }
@@ -147,9 +148,9 @@ vector<vector<signed long int>> Workload::run(double sample_perid, bool reset)
                 ptrace(PTRACE_CONT, pid, 0, 0);
             // continue;
         }
-        
+
         if(sample_perid) usleep(sample_perid);
-        
+
         bytes_read= 0;
         for(i=0; i<fds.size(); i++)
         {

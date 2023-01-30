@@ -1,6 +1,7 @@
 import unittest
-from profiler import Profiler
+from performance_features import Profiler
 import os, time
+
 
 def is_process_running(process_id):
     try:
@@ -13,56 +14,82 @@ def is_process_running(process_id):
 def run_n(n):
     def ntime(of):
         def func(*args, **kargs):
-            for _ in range(n-1):
+            for _ in range(n - 1):
                 of(*args, **kargs)
             return of(*args, **kargs)
+
         return func
+
     return ntime
+
 
 class TestCompareMethods(unittest.TestCase):
     pass
-class TestProfilerMethods(unittest.TestCase):
 
+
+class TestProfilerMethods(unittest.TestCase):
     @run_n(1)
     def test_run(self):
         for sp in [-0.1, 0, 0.1]:
             for res in [True, False]:
-                program= Profiler(program_args=['./simple_bench'], events_groups=[['PERF_COUNT_HW_INSTRUCTIONS']])
+                program = Profiler(
+                    program_args=["./simple_bench"],
+                    events_groups=[["PERF_COUNT_HW_INSTRUCTIONS"]],
+                )
                 self.assertTrue(program.run(sample_period=sp, reset_on_sample=res))
-        
+
         for sp in [-0.1, 0, 0.1]:
             for res in [True, False]:
                 with self.assertRaises(Exception):
-                    program= Profiler(program_args=['./simple_bench'], events_groups=[['INVALID']])
+                    program = Profiler(
+                        program_args=["./simple_bench"], events_groups=[["INVALID"]]
+                    )
                     program.run(sample_period=sp, reset_on_sample=res)
-                
+
                 with self.assertRaises(Exception):
-                    program= Profiler(program_args=['INVALID'], events_groups=[['PERF_COUNT_HW_INSTRUCTIONS']])
+                    program = Profiler(
+                        program_args=["INVALID"],
+                        events_groups=[["PERF_COUNT_HW_INSTRUCTIONS"]],
+                    )
                     program.run(sample_period=sp, reset_on_sample=res)
-                
+
                 with self.assertRaises(Exception):
-                    program= Profiler(program_args=['INVALID'], events_groups=[['INVALID']])
+                    program = Profiler(
+                        program_args=["INVALID"], events_groups=[["INVALID"]]
+                    )
                     program.run(sample_period=sp, reset_on_sample=res)
 
     @run_n(10)
     def test_runpython(self):
         for sp in [-0.1, 0, 0.1]:
             for res in [True, False]:
-                program= Profiler(program_args=['./simple_bench'], events_groups=[['PERF_COUNT_HW_INSTRUCTIONS']])
-                self.assertTrue(program.run_python(sample_period=sp, reset_on_sample=res))
-        
+                program = Profiler(
+                    program_args=["./simple_bench"],
+                    events_groups=[["PERF_COUNT_HW_INSTRUCTIONS"]],
+                )
+                self.assertTrue(
+                    program.run_python(sample_period=sp, reset_on_sample=res)
+                )
+
         for sp in [-0.1, 0, 0.1]:
             for res in [True, False]:
                 with self.assertRaises(Exception):
-                    program= Profiler(program_args=['./simple_bench'], events_groups=[['INVALID']])
+                    program = Profiler(
+                        program_args=["./simple_bench"], events_groups=[["INVALID"]]
+                    )
                     program.run_python(sample_period=sp, reset_on_sample=res)
-                
+
                 with self.assertRaises(Exception):
-                    program= Profiler(program_args=['INVALID'], events_groups=[['PERF_COUNT_HW_INSTRUCTIONS']])
+                    program = Profiler(
+                        program_args=["INVALID"],
+                        events_groups=[["PERF_COUNT_HW_INSTRUCTIONS"]],
+                    )
                     program.run_python(sample_period=sp, reset_on_sample=res)
-                
+
                 with self.assertRaises(Exception):
-                    program= Profiler(program_args=['INVALID'], events_groups=[['INVALID']])
+                    program = Profiler(
+                        program_args=["INVALID"], events_groups=[["INVALID"]]
+                    )
                     program.run_python(sample_period=sp, reset_on_sample=res)
 
     @run_n(10)
@@ -73,26 +100,41 @@ class TestProfilerMethods(unittest.TestCase):
 
         for sp in [-0.1, 0, 0.1]:
             for res in [True, False]:
-                program= Profiler(program_args=['./simple_bench'], events_groups=[['PERF_COUNT_HW_INSTRUCTIONS']])
+                program = Profiler(
+                    program_args=["./simple_bench"],
+                    events_groups=[["PERF_COUNT_HW_INSTRUCTIONS"]],
+                )
                 program.run_background()
-                while program.program.isAlive: pass
-        
+                while program.program.isAlive:
+                    pass
+
         for sp in [-0.1, 0, 0.1]:
             for res in [True, False]:
                 with self.assertRaises(Exception):
-                    program= Profiler(program_args=['./simple_bench'], events_groups=[['INVALID']])
+                    program = Profiler(
+                        program_args=["./simple_bench"], events_groups=[["INVALID"]]
+                    )
                     program.run_background()
-                    while program.program.isAlive: pass
-                
-                with self.assertRaises(Exception):
-                    program= Profiler(program_args=['INVALID'], events_groups=[['PERF_COUNT_HW_INSTRUCTIONS']])
-                    program.run_background()
-                    while program.program.isAlive: pass
-                
-                with self.assertRaises(Exception):
-                    program= Profiler(program_args=['INVALID'], events_groups=[['INVALID']])
-                    program.run_background()
-                    while program.program.isAlive: pass
+                    while program.program.isAlive:
+                        pass
 
-if __name__ == '__main__':
+                with self.assertRaises(Exception):
+                    program = Profiler(
+                        program_args=["INVALID"],
+                        events_groups=[["PERF_COUNT_HW_INSTRUCTIONS"]],
+                    )
+                    program.run_background()
+                    while program.program.isAlive:
+                        pass
+
+                with self.assertRaises(Exception):
+                    program = Profiler(
+                        program_args=["INVALID"], events_groups=[["INVALID"]]
+                    )
+                    program.run_background()
+                    while program.program.isAlive:
+                        pass
+
+
+if __name__ == "__main__":
     unittest.main()
