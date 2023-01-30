@@ -12,7 +12,7 @@ def get_supported_pmus():
     return pmus
 
 
-def get_supported_events(name=''):
+def get_supported_events(name=""):
     evs = []
     for pmu in _events_system.pmus:
         pmu_info = pmu.info
@@ -23,7 +23,7 @@ def get_supported_events(name=''):
     return evs
 
 
-def get_event_description(name=''):
+def get_event_description(name=""):
     evs = []
     for pmu in _events_system.pmus:
         pmu_info = pmu.info
