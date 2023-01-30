@@ -72,6 +72,7 @@ int Workload::create_wrokload(const vector<string>& args)
     {
         return pid;
     }
+    return 0;
 }
 
 void Workload::wait_finish()

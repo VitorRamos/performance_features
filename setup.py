@@ -15,7 +15,7 @@ class cbuild_ext(build_ext):
 setuptools.setup(
     cmdclass={"build_ext": cbuild_ext},
     name="performance_features",
-    version="0.2.5",
+    version="0.2.6",
     packages=["perfmon", "performance_features"],
     package_dir={"perfmon": "perfmon", "performance_features": "performance_features"},
     py_modules=["perfmon.perfmon_int", "performance_features.profiler"],
